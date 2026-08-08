@@ -20,6 +20,14 @@ async function requireAdmin() {
   }
 }
 
+/**
+ * Home and league listings are prerendered, so an edit in the admin must purge
+ * the whole public tree or the change stays invisible until the next deploy.
+ */
+function revalidatePublicSite() {
+  revalidatePath("/", "layout");
+}
+
 /** Slugs must be unique; append a counter when the natural slug is taken. */
 async function uniqueSlug(
   base: string,
@@ -129,6 +137,7 @@ export async function saveClub(
   }
 
   revalidatePath("/admin/clubs");
+  revalidatePublicSite();
   redirect("/admin/clubs");
 }
 
@@ -138,6 +147,7 @@ export async function deleteClub(formData: FormData): Promise<void> {
 
   await prisma.club.delete({ where: { id } });
   revalidatePath("/admin/clubs");
+  revalidatePublicSite();
 }
 
 // ---------------------------------------------------------------- players
@@ -199,6 +209,7 @@ export async function savePlayer(
   }
 
   revalidatePath("/admin/players");
+  revalidatePublicSite();
   redirect("/admin/players");
 }
 
@@ -208,6 +219,7 @@ export async function deletePlayer(formData: FormData): Promise<void> {
 
   await prisma.player.delete({ where: { id } });
   revalidatePath("/admin/players");
+  revalidatePublicSite();
 }
 
 // ---------------------------------------------------------------- transfers
@@ -268,6 +280,7 @@ export async function saveTransfer(
   }
 
   revalidatePath("/admin/transfers");
+  revalidatePublicSite();
   redirect("/admin/transfers");
 }
 
@@ -277,4 +290,5 @@ export async function deleteTransfer(formData: FormData): Promise<void> {
 
   await prisma.transfer.delete({ where: { id } });
   revalidatePath("/admin/transfers");
+  revalidatePublicSite();
 }
