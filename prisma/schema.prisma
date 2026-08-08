@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Position {
+  GK
+  CB
+  LB
+  RB
+  DM
+  CM
+  AM
+  LW
+  RW
+  ST
+}
+
+enum Foot {
+  LEFT
+  RIGHT
+  BOTH
+}
+
+enum TransferType {
+  PERMANENT
+  LOAN
+  LOAN_RETURN
+  FREE
+  END_OF_CONTRACT
+  YOUTH_PROMOTION
+  RETIRED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+model Country {
+  id      String   @id @default(cuid())
+  slug    String   @unique
+  code    String   @unique
+  nameFr  String
+  nameEn  String
+  nameAr  String
+  flagUrl String?
+
+  leagues     League[]
+  nationalsOf Player[] @relation("PlayerNationality")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model League {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  nameFr    String
+  nameEn    String
+  nameAr    String
+  tier      Int     @default(1)
+  logoUrl   String?
+  countryId String
+
+  country Country @relation(fields: [countryId], references: [id], onDelete: Restrict)
+  clubs   Club[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([countryId])
+}
+
+model Club {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  nameFr    String
+  nameEn    String
+  nameAr    String
+  shortName String?
+  city      String?
+  stadium   String?
+  founded   Int?
+  logoUrl   String?
+  leagueId  String
+
+  league  League   @relation(fields: [leagueId], references: [id], onDelete: Restrict)
+  players Player[]
+
+  transfersIn  Transfer[] @relation("TransferToClub")
+  transfersOut Transfer[] @relation("TransferFromClub")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leagueId])
+}
+
+model Player {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  name          String
+  nameAr        String?
+  dateOfBirth   DateTime?
+  position      Position?
+  foot          Foot?
+  heightCm      Int?
+  shirtNumber   Int?
+  contractUntil DateTime?
+  agent         String?
+  photoUrl      String?
+  clubId        String?
+  nationalityId String?
+
+  club         Club?    @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  nationality  Country? @relation("PlayerNationality", fields: [nationalityId], references: [id], onDelete: SetNull)
+
+  transfers     Transfer[]
+  marketValues  MarketValue[]
+  valueProposals ValueProposal[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clubId])
+  @@index([nationalityId])
+  @@index([name])
+}
+
+model Season {
+  id        String   @id @default(cuid())
+  label     String   @unique
+  startDate DateTime
+  endDate   DateTime
+  isCurrent Boolean  @default(false)
+
+  transfers Transfer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transfer {
+  id         String       @id @default(cuid())
+  playerId   String
+  fromClubId String?
+  toClubId   String?
+  seasonId   String?
+  date       DateTime
+  type       TransferType @default(PERMANENT)
+  feeEur     Int?
+  isFeeUndisclosed Boolean @default(false)
+
+  player   Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  fromClub Club?   @relation("TransferFromClub", fields: [fromClubId], references: [id], onDelete: SetNull)
+  toClub   Club?   @relation("TransferToClub", fields: [toClubId], references: [id], onDelete: SetNull)
+  season   Season? @relation(fields: [seasonId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([playerId])
+  @@index([date])
+  @@index([seasonId])
+}
+
+model MarketValue {
+  id        String   @id @default(cuid())
+  playerId  String
+  valueEur  Int
+  effectiveAt DateTime @default(now())
+  note      String?
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([playerId, effectiveAt])
+}
+
+model UserProfile {
+  id        String   @id
+  username  String   @unique
+  email     String   @unique
+  role      Role     @default(USER)
+  isBanned  Boolean  @default(false)
+
+  proposals        ValueProposal[]
+  reviewedProposals ValueProposal[] @relation("ProposalReviewer")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ValueProposal {
+  id         String         @id @default(cuid())
+  playerId   String
+  userId     String
+  valueEur   Int
+  comment    String?
+  status     ProposalStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt DateTime?
+
+  player     Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  user       UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy UserProfile? @relation("ProposalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([playerId, status])
+  @@index([userId])
+  @@index([status])
+}

@@ -1,0 +1,131 @@
+{
+  "nav": {
+    "home": "Home",
+    "leagues": "Leagues",
+    "clubs": "Clubs",
+    "players": "Players",
+    "transfers": "Transfers",
+    "search": "Search",
+    "searchPlaceholder": "Player, club, league...",
+    "admin": "Admin",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "myAccount": "My account"
+  },
+  "home": {
+    "heroTitle": "The African football transfer market",
+    "heroSubtitle": "Market values, transfers and squads from across the continent.",
+    "latestTransfers": "Latest transfers",
+    "topValues": "Highest market values",
+    "leagues": "Leagues",
+    "browseLeagues": "Browse leagues",
+    "viewAll": "View all",
+    "emptyState": "No data yet."
+  },
+  "league": {
+    "clubs": "Clubs",
+    "clubCount": "{count, plural, =0 {no clubs} one {# club} other {# clubs}}",
+    "totalValue": "Total value",
+    "averageAge": "Average age",
+    "squadSize": "Squad size",
+    "tier": "Tier {tier}"
+  },
+  "club": {
+    "squad": "Squad",
+    "arrivals": "Arrivals",
+    "departures": "Departures",
+    "info": "Information",
+    "city": "City",
+    "stadium": "Stadium",
+    "founded": "Founded",
+    "league": "League",
+    "totalValue": "Squad value",
+    "noPlayers": "No players recorded for this club."
+  },
+  "player": {
+    "profile": "Profile",
+    "dateOfBirth": "Date of birth",
+    "age": "Age",
+    "nationality": "Nationality",
+    "position": "Position",
+    "foot": "Preferred foot",
+    "height": "Height",
+    "club": "Current club",
+    "contractUntil": "Contract until",
+    "agent": "Agent",
+    "shirtNumber": "Shirt number",
+    "marketValue": "Market value",
+    "valueHistory": "Market value history",
+    "transferHistory": "Transfer history",
+    "noValue": "Not valued",
+    "noTransfers": "No transfers recorded.",
+    "proposeValue": "Propose a value",
+    "freeAgent": "Free agent",
+    "years": "{count} years"
+  },
+  "transfers": {
+    "title": "Transfers",
+    "date": "Date",
+    "player": "Player",
+    "from": "From",
+    "to": "To",
+    "fee": "Fee",
+    "type": "Type",
+    "season": "Season",
+    "undisclosed": "Undisclosed",
+    "free": "Free",
+    "loan": "Loan",
+    "filterLeague": "League",
+    "filterSeason": "Season",
+    "filterType": "Type",
+    "allLeagues": "All leagues",
+    "allSeasons": "All seasons",
+    "allTypes": "All types",
+    "noResults": "No transfers match these filters."
+  },
+  "transferType": {
+    "PERMANENT": "Transfer",
+    "LOAN": "Loan",
+    "LOAN_RETURN": "Loan return",
+    "FREE": "Free transfer",
+    "END_OF_CONTRACT": "End of contract",
+    "YOUTH_PROMOTION": "Youth promotion",
+    "RETIRED": "Retired"
+  },
+  "position": {
+    "GK": "Goalkeeper",
+    "CB": "Centre-back",
+    "LB": "Left-back",
+    "RB": "Right-back",
+    "DM": "Defensive midfield",
+    "CM": "Central midfield",
+    "AM": "Attacking midfield",
+    "LW": "Left winger",
+    "RW": "Right winger",
+    "ST": "Striker"
+  },
+  "foot": {
+    "LEFT": "Left",
+    "RIGHT": "Right",
+    "BOTH": "Both"
+  },
+  "search": {
+    "title": "Search results",
+    "resultsFor": "Results for \"{query}\"",
+    "players": "Players",
+    "clubs": "Clubs",
+    "noResults": "No results.",
+    "typeToSearch": "Enter a player or club name."
+  },
+  "footer": {
+    "about": "About",
+    "dataNotice": "Data entered and verified by our editorial team. This site is independent.",
+    "rights": "All rights reserved."
+  },
+  "common": {
+    "loading": "Loading...",
+    "back": "Back",
+    "language": "Language"
+  }
+}

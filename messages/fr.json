@@ -1,0 +1,131 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "leagues": "Championnats",
+    "clubs": "Clubs",
+    "players": "Joueurs",
+    "transfers": "Transferts",
+    "search": "Rechercher",
+    "searchPlaceholder": "Joueur, club, championnat...",
+    "admin": "Administration",
+    "signIn": "Connexion",
+    "signUp": "Inscription",
+    "signOut": "Déconnexion",
+    "myAccount": "Mon compte"
+  },
+  "home": {
+    "heroTitle": "Le marché des transferts du football africain",
+    "heroSubtitle": "Valeurs marchandes, transferts et effectifs des championnats du continent.",
+    "latestTransfers": "Derniers transferts",
+    "topValues": "Plus fortes valeurs",
+    "leagues": "Championnats",
+    "browseLeagues": "Explorer les championnats",
+    "viewAll": "Tout voir",
+    "emptyState": "Aucune donnée pour le moment."
+  },
+  "league": {
+    "clubs": "Clubs",
+    "clubCount": "{count, plural, =0 {aucun club} one {# club} other {# clubs}}",
+    "totalValue": "Valeur totale",
+    "averageAge": "Âge moyen",
+    "squadSize": "Effectif",
+    "tier": "Division {tier}"
+  },
+  "club": {
+    "squad": "Effectif",
+    "arrivals": "Arrivées",
+    "departures": "Départs",
+    "info": "Informations",
+    "city": "Ville",
+    "stadium": "Stade",
+    "founded": "Fondé en",
+    "league": "Championnat",
+    "totalValue": "Valeur de l'effectif",
+    "noPlayers": "Aucun joueur enregistré pour ce club."
+  },
+  "player": {
+    "profile": "Profil",
+    "dateOfBirth": "Date de naissance",
+    "age": "Âge",
+    "nationality": "Nationalité",
+    "position": "Poste",
+    "foot": "Pied fort",
+    "height": "Taille",
+    "club": "Club actuel",
+    "contractUntil": "Fin de contrat",
+    "agent": "Agent",
+    "shirtNumber": "Numéro",
+    "marketValue": "Valeur marchande",
+    "valueHistory": "Évolution de la valeur",
+    "transferHistory": "Historique des transferts",
+    "noValue": "Non estimée",
+    "noTransfers": "Aucun transfert enregistré.",
+    "proposeValue": "Proposer une valeur",
+    "freeAgent": "Sans club",
+    "years": "{count} ans"
+  },
+  "transfers": {
+    "title": "Transferts",
+    "date": "Date",
+    "player": "Joueur",
+    "from": "De",
+    "to": "Vers",
+    "fee": "Montant",
+    "type": "Type",
+    "season": "Saison",
+    "undisclosed": "Non communiqué",
+    "free": "Libre",
+    "loan": "Prêt",
+    "filterLeague": "Championnat",
+    "filterSeason": "Saison",
+    "filterType": "Type",
+    "allLeagues": "Tous les championnats",
+    "allSeasons": "Toutes les saisons",
+    "allTypes": "Tous les types",
+    "noResults": "Aucun transfert ne correspond à ces critères."
+  },
+  "transferType": {
+    "PERMANENT": "Transfert",
+    "LOAN": "Prêt",
+    "LOAN_RETURN": "Retour de prêt",
+    "FREE": "Transfert libre",
+    "END_OF_CONTRACT": "Fin de contrat",
+    "YOUTH_PROMOTION": "Promu du centre",
+    "RETIRED": "Fin de carrière"
+  },
+  "position": {
+    "GK": "Gardien",
+    "CB": "Défenseur central",
+    "LB": "Arrière gauche",
+    "RB": "Arrière droit",
+    "DM": "Milieu défensif",
+    "CM": "Milieu central",
+    "AM": "Milieu offensif",
+    "LW": "Ailier gauche",
+    "RW": "Ailier droit",
+    "ST": "Attaquant"
+  },
+  "foot": {
+    "LEFT": "Gauche",
+    "RIGHT": "Droit",
+    "BOTH": "Les deux"
+  },
+  "search": {
+    "title": "Résultats de recherche",
+    "resultsFor": "Résultats pour « {query} »",
+    "players": "Joueurs",
+    "clubs": "Clubs",
+    "noResults": "Aucun résultat.",
+    "typeToSearch": "Saisis un nom de joueur ou de club."
+  },
+  "footer": {
+    "about": "À propos",
+    "dataNotice": "Données saisies et vérifiées par la rédaction. Ce site est indépendant.",
+    "rights": "Tous droits réservés."
+  },
+  "common": {
+    "loading": "Chargement...",
+    "back": "Retour",
+    "language": "Langue"
+  }
+}

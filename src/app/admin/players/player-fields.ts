@@ -1,0 +1,140 @@
+import type { Field, FieldOption } from "@/components/admin-form";
+
+const POSITIONS: FieldOption[] = [
+  { value: "GK", label: "Gardien" },
+  { value: "CB", label: "Défenseur central" },
+  { value: "LB", label: "Arrière gauche" },
+  { value: "RB", label: "Arrière droit" },
+  { value: "DM", label: "Milieu défensif" },
+  { value: "CM", label: "Milieu central" },
+  { value: "AM", label: "Milieu offensif" },
+  { value: "LW", label: "Ailier gauche" },
+  { value: "RW", label: "Ailier droit" },
+  { value: "ST", label: "Attaquant" },
+];
+
+const FEET: FieldOption[] = [
+  { value: "RIGHT", label: "Droit" },
+  { value: "LEFT", label: "Gauche" },
+  { value: "BOTH", label: "Les deux" },
+];
+
+function toDateInput(date: Date | null | undefined): string {
+  if (!date) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+type PlayerDefaults = {
+  name?: string;
+  nameAr?: string | null;
+  dateOfBirth?: Date | null;
+  position?: string | null;
+  foot?: string | null;
+  heightCm?: number | null;
+  shirtNumber?: number | null;
+  contractUntil?: Date | null;
+  agent?: string | null;
+  photoUrl?: string | null;
+  clubId?: string | null;
+  nationalityId?: string | null;
+};
+
+export function playerFields(
+  clubs: FieldOption[],
+  countries: FieldOption[],
+  currentValueEur: number | null,
+  defaults: PlayerDefaults = {},
+): Field[] {
+  return [
+    {
+      kind: "text",
+      name: "name",
+      label: "Nom complet",
+      required: true,
+      defaultValue: defaults.name,
+    },
+    {
+      kind: "text",
+      name: "nameAr",
+      label: "Nom en arabe",
+      defaultValue: defaults.nameAr ?? "",
+      hint: "Facultatif — utilisé sur la version arabe du site.",
+    },
+    {
+      kind: "select",
+      name: "clubId",
+      label: "Club",
+      placeholder: "Sans club",
+      options: clubs,
+      defaultValue: defaults.clubId ?? "",
+    },
+    {
+      kind: "select",
+      name: "nationalityId",
+      label: "Nationalité",
+      placeholder: "Non renseignée",
+      options: countries,
+      defaultValue: defaults.nationalityId ?? "",
+    },
+    {
+      kind: "date",
+      name: "dateOfBirth",
+      label: "Date de naissance",
+      defaultValue: toDateInput(defaults.dateOfBirth),
+    },
+    {
+      kind: "select",
+      name: "position",
+      label: "Poste",
+      placeholder: "Non renseigné",
+      options: POSITIONS,
+      defaultValue: defaults.position ?? "",
+    },
+    {
+      kind: "select",
+      name: "foot",
+      label: "Pied fort",
+      placeholder: "Non renseigné",
+      options: FEET,
+      defaultValue: defaults.foot ?? "",
+    },
+    {
+      kind: "number",
+      name: "heightCm",
+      label: "Taille (cm)",
+      defaultValue: defaults.heightCm ? String(defaults.heightCm) : "",
+    },
+    {
+      kind: "number",
+      name: "shirtNumber",
+      label: "Numéro de maillot",
+      defaultValue: defaults.shirtNumber ? String(defaults.shirtNumber) : "",
+    },
+    {
+      kind: "date",
+      name: "contractUntil",
+      label: "Fin de contrat",
+      defaultValue: toDateInput(defaults.contractUntil),
+    },
+    {
+      kind: "text",
+      name: "agent",
+      label: "Agent",
+      defaultValue: defaults.agent ?? "",
+    },
+    {
+      kind: "url",
+      name: "photoUrl",
+      label: "Adresse de la photo",
+      defaultValue: defaults.photoUrl ?? "",
+      hint: "Colle ici le lien direct vers une image (https://...).",
+    },
+    {
+      kind: "number",
+      name: "marketValueEur",
+      label: "Valeur marchande (€)",
+      defaultValue: currentValueEur === null ? "" : String(currentValueEur),
+      hint: "En euros, sans espaces ni symbole. Chaque changement est conservé dans l'historique.",
+    },
+  ];
+}

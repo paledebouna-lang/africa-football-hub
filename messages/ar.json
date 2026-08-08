@@ -1,0 +1,131 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "leagues": "الدوريات",
+    "clubs": "الأندية",
+    "players": "اللاعبون",
+    "transfers": "الانتقالات",
+    "search": "بحث",
+    "searchPlaceholder": "لاعب، نادٍ، دوري...",
+    "admin": "الإدارة",
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "signOut": "تسجيل الخروج",
+    "myAccount": "حسابي"
+  },
+  "home": {
+    "heroTitle": "سوق انتقالات كرة القدم الأفريقية",
+    "heroSubtitle": "القيم السوقية والانتقالات وتشكيلات أندية القارة.",
+    "latestTransfers": "أحدث الانتقالات",
+    "topValues": "أعلى القيم السوقية",
+    "leagues": "الدوريات",
+    "browseLeagues": "استكشاف الدوريات",
+    "viewAll": "عرض الكل",
+    "emptyState": "لا توجد بيانات بعد."
+  },
+  "league": {
+    "clubs": "الأندية",
+    "clubCount": "{count, plural, =0 {لا أندية} one {# نادٍ} other {# أندية}}",
+    "totalValue": "القيمة الإجمالية",
+    "averageAge": "متوسط العمر",
+    "squadSize": "عدد اللاعبين",
+    "tier": "الدرجة {tier}"
+  },
+  "club": {
+    "squad": "التشكيلة",
+    "arrivals": "الوافدون",
+    "departures": "المغادرون",
+    "info": "معلومات",
+    "city": "المدينة",
+    "stadium": "الملعب",
+    "founded": "سنة التأسيس",
+    "league": "الدوري",
+    "totalValue": "قيمة التشكيلة",
+    "noPlayers": "لا يوجد لاعبون مسجلون لهذا النادي."
+  },
+  "player": {
+    "profile": "الملف الشخصي",
+    "dateOfBirth": "تاريخ الميلاد",
+    "age": "العمر",
+    "nationality": "الجنسية",
+    "position": "المركز",
+    "foot": "القدم المفضلة",
+    "height": "الطول",
+    "club": "النادي الحالي",
+    "contractUntil": "نهاية العقد",
+    "agent": "الوكيل",
+    "shirtNumber": "رقم القميص",
+    "marketValue": "القيمة السوقية",
+    "valueHistory": "تطور القيمة السوقية",
+    "transferHistory": "سجل الانتقالات",
+    "noValue": "غير مقدرة",
+    "noTransfers": "لا توجد انتقالات مسجلة.",
+    "proposeValue": "اقترح قيمة",
+    "freeAgent": "لاعب حر",
+    "years": "{count} سنة"
+  },
+  "transfers": {
+    "title": "الانتقالات",
+    "date": "التاريخ",
+    "player": "اللاعب",
+    "from": "من",
+    "to": "إلى",
+    "fee": "القيمة",
+    "type": "النوع",
+    "season": "الموسم",
+    "undisclosed": "غير معلنة",
+    "free": "مجاني",
+    "loan": "إعارة",
+    "filterLeague": "الدوري",
+    "filterSeason": "الموسم",
+    "filterType": "النوع",
+    "allLeagues": "جميع الدوريات",
+    "allSeasons": "جميع المواسم",
+    "allTypes": "جميع الأنواع",
+    "noResults": "لا توجد انتقالات مطابقة لهذه المعايير."
+  },
+  "transferType": {
+    "PERMANENT": "انتقال",
+    "LOAN": "إعارة",
+    "LOAN_RETURN": "نهاية الإعارة",
+    "FREE": "انتقال حر",
+    "END_OF_CONTRACT": "نهاية العقد",
+    "YOUTH_PROMOTION": "ترقية من الفئات السنية",
+    "RETIRED": "اعتزال"
+  },
+  "position": {
+    "GK": "حارس مرمى",
+    "CB": "قلب دفاع",
+    "LB": "ظهير أيسر",
+    "RB": "ظهير أيمن",
+    "DM": "وسط مدافع",
+    "CM": "وسط ملعب",
+    "AM": "وسط مهاجم",
+    "LW": "جناح أيسر",
+    "RW": "جناح أيمن",
+    "ST": "مهاجم"
+  },
+  "foot": {
+    "LEFT": "اليسرى",
+    "RIGHT": "اليمنى",
+    "BOTH": "كلتاهما"
+  },
+  "search": {
+    "title": "نتائج البحث",
+    "resultsFor": "نتائج البحث عن «{query}»",
+    "players": "اللاعبون",
+    "clubs": "الأندية",
+    "noResults": "لا توجد نتائج.",
+    "typeToSearch": "أدخل اسم لاعب أو نادٍ."
+  },
+  "footer": {
+    "about": "من نحن",
+    "dataNotice": "بيانات مُدخلة ومُتحقق منها من قبل هيئة التحرير. هذا الموقع مستقل.",
+    "rights": "جميع الحقوق محفوظة."
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "back": "رجوع",
+    "language": "اللغة"
+  }
+}
