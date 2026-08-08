@@ -96,6 +96,14 @@ enum ValuationSource {
   ALGORITHM
 }
 
+enum HonourType {
+  WINNER
+  RUNNER_UP
+  THIRD_PLACE
+  PROMOTION
+  INDIVIDUAL_AWARD
+}
+
 enum Confederation {
   CAF
   UEFA
@@ -124,6 +132,7 @@ model Country {
   nationalsOf  Player[]                @relation("PlayerNationality")
   coaches      Coach[]                 @relation("CoachNationality")
   selections   NationalTeamSelection[]
+  honours      Honour[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,6 +159,7 @@ model Competition {
   country      Country?          @relation(fields: [countryId], references: [id], onDelete: SetNull)
   primaryClubs Club[]            @relation("ClubPrimaryCompetition")
   entries      ClubCompetition[]
+  honours      Honour[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -170,6 +180,7 @@ model Club {
   stadium               String?
   founded               Int?
   logoUrl               String?
+  teamPhotoUrl          String?
   websiteUrl            String?
   primaryCompetitionId  String?
   parentClubId          String?
@@ -186,6 +197,7 @@ model Club {
   players     Player[]
   coachSpells CoachSpell[]
   entries     ClubCompetition[]
+  honours     Honour[]
 
   transfersIn  Transfer[] @relation("TransferToClub")
   transfersOut Transfer[] @relation("TransferFromClub")
@@ -242,6 +254,7 @@ model Player {
   valueProposals ValueProposal[]
   videos         PlayerVideo[]
   selections     NationalTeamSelection[]
+  honours        Honour[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -298,8 +311,9 @@ model Coach {
   licence       String?
   nationalityId String?
 
-  nationality Country? @relation("CoachNationality", fields: [nationalityId], references: [id], onDelete: SetNull)
+  nationality Country?     @relation("CoachNationality", fields: [nationalityId], references: [id], onDelete: SetNull)
   spells      CoachSpell[]
+  honours     Honour[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -344,6 +358,42 @@ model TrainingCostRate {
 
   @@unique([confederation, category, year])
   @@index([year])
+}
+
+/// A title or award. Exactly one holder is set — a club, a player, a coach, or a
+/// country standing in for its national team. When `competitionId` points at a
+/// competition the display uses that name; otherwise the free-text title carries
+/// awards that belong to no competition, such as a federation's player of the year.
+model Honour {
+  id            String     @id @default(cuid())
+  type          HonourType @default(WINNER)
+  year          Int
+  seasonLabel   String?
+  competitionId String?
+  titleFr       String?
+  titleEn       String?
+  titleAr       String?
+  note          String?
+
+  clubId    String?
+  playerId  String?
+  coachId   String?
+  countryId String?
+
+  competition Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  club        Club?        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  player      Player?      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  coach       Coach?       @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  country     Country?     @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clubId, year])
+  @@index([playerId, year])
+  @@index([coachId, year])
+  @@index([countryId, year])
+  @@index([competitionId])
 }
 
 model Season {

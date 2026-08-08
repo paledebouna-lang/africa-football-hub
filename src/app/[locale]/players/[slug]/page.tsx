@@ -11,6 +11,7 @@ import { ValuationBreakdown, type Breakdown } from "@/components/valuation-break
 import { ProfileHeader, Badge, DataGrid, DataPoint } from "@/components/profile-header";
 import { DataTable, SectionTitle } from "@/components/data-table";
 import { PlayerPhoto, Crest, Flag } from "@/components/ui/media";
+import { HonoursList } from "@/components/honours-list";
 
 export default async function PlayerPage({
   params,
@@ -201,6 +202,18 @@ export default async function PlayerPage({
               </tr>
             ))}
           </DataTable>
+        </section>
+      )}
+
+      {player.honours.length > 0 && (
+        <section>
+          <SectionTitle>{t("honours.title")}</SectionTitle>
+          <HonoursList
+            honours={player.honours}
+            locale={locale}
+            typeLabel={(type) => t(`honourType.${type}`)}
+            emptyLabel={t("honours.none")}
+          />
         </section>
       )}
 

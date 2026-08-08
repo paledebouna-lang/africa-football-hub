@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n/routing";
 import { formatDate, ageFrom } from "@/lib/format";
 import { localizedName } from "@/lib/localized";
 import { getCoachBySlug } from "@/lib/queries";
+import { ProfileHeader, Badge, DataGrid, DataPoint } from "@/components/profile-header";
+import { DataTable, SectionTitle } from "@/components/data-table";
+import { PlayerPhoto, Crest, Flag } from "@/components/ui/media";
+import { HonoursList } from "@/components/honours-list";
 
 export default async function CoachPage({
   params,
@@ -18,110 +22,124 @@ export default async function CoachPage({
   const coach = await getCoachBySlug(slug);
   if (!coach) notFound();
 
+  const displayName = locale === "ar" && coach.nameAr ? coach.nameAr : coach.name;
   const age = ageFrom(coach.dateOfBirth);
   const currentSpell = coach.spells.find((spell) => spell.endDate === null);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
-      <header>
-        {currentSpell && (
-          <p className="text-sm text-muted">
-            <Link
-              href={`/clubs/${currentSpell.club.slug}`}
-              className="hover:text-brand"
-            >
-              {localizedName(currentSpell.club, locale)}
-            </Link>
-            {" · "}
-            {t(`coachRole.${currentSpell.role}`)}
-          </p>
-        )}
-        <h1 className="text-2xl font-bold">
-          {locale === "ar" && coach.nameAr ? coach.nameAr : coach.name}
-        </h1>
-      </header>
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
+      <ProfileHeader
+        media={<PlayerPhoto src={coach.photoUrl} name={displayName} size="xl" />}
+        breadcrumb={
+          currentSpell && (
+            <span className="inline-flex items-center gap-2">
+              <Crest
+                src={currentSpell.club.logoUrl}
+                name={currentSpell.club.nameFr}
+                size="sm"
+              />
+              <Link
+                href={`/clubs/${currentSpell.club.slug}`}
+                className="hover:text-brand"
+              >
+                {localizedName(currentSpell.club, locale)}
+              </Link>
+            </span>
+          )
+        }
+        title={displayName}
+        subtitle={
+          coach.nationality && (
+            <span className="inline-flex items-center gap-1.5">
+              <Flag
+                src={coach.nationality.flagUrl}
+                label={localizedName(coach.nationality, locale)}
+              />
+              {localizedName(coach.nationality, locale)}
+            </span>
+          )
+        }
+        badges={
+          <>
+            {currentSpell && (
+              <Badge tone="brand">{t(`coachRole.${currentSpell.role}`)}</Badge>
+            )}
+            {coach.licence && <Badge>{coach.licence}</Badge>}
+          </>
+        }
+      />
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <InfoCard
-          label={t("player.dateOfBirth")}
-          value={formatDate(coach.dateOfBirth, locale)}
-        />
-        <InfoCard
-          label={t("player.age")}
-          value={age === null ? "—" : t("player.years", { count: age })}
-        />
-        <InfoCard
-          label={t("player.nationality")}
-          value={coach.nationality ? localizedName(coach.nationality, locale) : "—"}
-        />
-        <InfoCard label={t("coach.licence")} value={coach.licence ?? "—"} />
-      </section>
+      <DataGrid>
+        <DataPoint label={t("player.dateOfBirth")}>
+          {formatDate(coach.dateOfBirth, locale)}
+        </DataPoint>
+        <DataPoint label={t("player.age")}>
+          {age === null ? "—" : t("player.years", { count: age })}
+        </DataPoint>
+        <DataPoint label={t("player.nationality")}>
+          {coach.nationality ? localizedName(coach.nationality, locale) : "—"}
+        </DataPoint>
+        <DataPoint label={t("coach.licence")}>{coach.licence ?? "—"}</DataPoint>
+      </DataGrid>
+
+      {coach.honours.length > 0 && (
+        <section>
+          <SectionTitle>{t("honours.title")}</SectionTitle>
+          <HonoursList
+            honours={coach.honours}
+            locale={locale}
+            typeLabel={(type) => t(`honourType.${type}`)}
+            emptyLabel={t("honours.none")}
+          />
+        </section>
+      )}
 
       <section>
-        <h2 className="text-xl font-semibold">{t("coach.career")}</h2>
+        <SectionTitle>{t("coach.career")}</SectionTitle>
         {coach.spells.length === 0 ? (
-          <p className="mt-4 text-sm text-muted">{t("coach.noSpells")}</p>
+          <p className="text-sm text-muted">{t("coach.noSpells")}</p>
         ) : (
-          <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-surface">
-            <table className="w-full text-sm">
-              <thead className="border-b border-border text-muted">
-                <tr>
-                  <th className="px-4 py-3 text-start font-medium">
-                    {t("coach.club")}
-                  </th>
-                  <th className="px-4 py-3 text-start font-medium">
-                    {t("coach.role")}
-                  </th>
-                  <th className="px-4 py-3 text-start font-medium">
-                    {t("coach.from")}
-                  </th>
-                  <th className="px-4 py-3 text-start font-medium">
-                    {t("coach.until")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {coach.spells.map((spell) => (
-                  <tr key={spell.id}>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/clubs/${spell.club.slug}`}
-                        className="font-medium hover:text-brand"
-                      >
-                        {localizedName(spell.club, locale)}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {t(`coachRole.${spell.role}`)}
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {formatDate(spell.startDate, locale)}
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {spell.endDate ? (
-                        formatDate(spell.endDate, locale)
-                      ) : (
-                        <span className="rounded bg-brand/15 px-2 py-0.5 text-xs font-medium text-brand">
-                          {t("coach.current")}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            headers={[
+              { label: t("coach.club") },
+              { label: t("coach.role") },
+              { label: t("coach.from") },
+              { label: t("coach.until") },
+            ]}
+          >
+            {coach.spells.map((spell) => (
+              <tr key={spell.id} className="hover:bg-brand/5">
+                <td className="px-3 py-2">
+                  <Link
+                    href={`/clubs/${spell.club.slug}`}
+                    className="inline-flex items-center gap-2.5 font-medium hover:text-brand"
+                  >
+                    <Crest
+                      src={spell.club.logoUrl}
+                      name={spell.club.nameFr}
+                      size="md"
+                    />
+                    {localizedName(spell.club, locale)}
+                  </Link>
+                </td>
+                <td className="px-3 py-2 text-muted">{t(`coachRole.${spell.role}`)}</td>
+                <td className="px-3 py-2 text-muted">
+                  {formatDate(spell.startDate, locale)}
+                </td>
+                <td className="px-3 py-2">
+                  {spell.endDate ? (
+                    <span className="text-muted">
+                      {formatDate(spell.endDate, locale)}
+                    </span>
+                  ) : (
+                    <Badge tone="brand">{t("coach.current")}</Badge>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </DataTable>
         )}
       </section>
-    </div>
-  );
-}
-
-function InfoCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-1 font-medium">{value}</p>
     </div>
   );
 }

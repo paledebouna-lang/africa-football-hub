@@ -8,6 +8,14 @@ const withLatestValue = {
   },
 } as const;
 
+/** Honours always need their competition to render a name. */
+const withHonours = {
+  honours: {
+    orderBy: { year: "desc" },
+    include: { competition: true },
+  },
+} as const;
+
 export function currentValueOf(player: {
   marketValues: { valueUsd: number }[];
 }): number | null {
@@ -76,6 +84,7 @@ export async function getClubBySlug(slug: string) {
       primaryCompetition: { include: { country: true } },
       parentClub: true,
       academies: true,
+      ...withHonours,
       entries: {
         where: season ? { seasonId: season.id } : undefined,
         include: { competition: { include: { country: true } } },
@@ -123,6 +132,7 @@ export async function getPlayerBySlug(slug: string) {
       nationality: true,
       selections: { include: { country: true }, orderBy: { level: "asc" } },
       videos: { orderBy: { createdAt: "desc" } },
+      ...withHonours,
       marketValues: { orderBy: { effectiveAt: "asc" } },
       transfers: {
         orderBy: { date: "desc" },
@@ -139,6 +149,7 @@ export async function getCoachBySlug(slug: string) {
     where: { slug },
     include: {
       nationality: true,
+      ...withHonours,
       spells: {
         orderBy: { startDate: "desc" },
         include: {

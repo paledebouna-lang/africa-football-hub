@@ -138,6 +138,7 @@ export async function saveClub(
     stadium: optionalText(formData.get("stadium")),
     founded: optionalInt(formData.get("founded")),
     logoUrl: optionalText(formData.get("logoUrl")),
+    teamPhotoUrl: optionalText(formData.get("teamPhotoUrl")),
     websiteUrl: optionalText(formData.get("websiteUrl")),
     fifaCategory,
     parentClubId,
@@ -368,6 +369,76 @@ export async function deleteTransfer(formData: FormData): Promise<void> {
 
   await prisma.transfer.delete({ where: { id } });
   revalidatePath("/admin/transfers");
+  revalidatePublicSite();
+}
+
+// ---------------------------------------------------------------- honours
+
+export async function saveHonour(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const holders = {
+    clubId: optionalText(formData.get("clubId")),
+    playerId: optionalText(formData.get("playerId")),
+    coachId: optionalText(formData.get("coachId")),
+    countryId: optionalText(formData.get("countryId")),
+  };
+
+  const filled = Object.values(holders).filter(Boolean);
+  if (filled.length === 0) {
+    return {
+      error:
+        "Choisis à qui appartient ce titre : un club, un joueur, un entraîneur ou une sélection nationale.",
+    };
+  }
+  if (filled.length > 1) {
+    return { error: "Un titre ne peut être attribué qu'à un seul bénéficiaire." };
+  }
+
+  const year = optionalInt(formData.get("year"));
+  if (year === null || year < 1880 || year > new Date().getFullYear() + 1) {
+    return { error: "L'année du titre est obligatoire et doit être plausible." };
+  }
+
+  const competitionId = optionalText(formData.get("competitionId"));
+  const titleFr = optionalText(formData.get("titleFr"));
+
+  // Either the title comes from a competition, or it is typed in by hand.
+  if (!competitionId && !titleFr) {
+    return {
+      error:
+        "Indique soit une compétition, soit un intitulé libre pour cette distinction.",
+    };
+  }
+
+  await prisma.honour.create({
+    data: {
+      ...holders,
+      competitionId,
+      year,
+      seasonLabel: optionalText(formData.get("seasonLabel")),
+      type: (optionalText(formData.get("type")) ?? "WINNER") as never,
+      titleFr,
+      titleEn: optionalText(formData.get("titleEn")) ?? titleFr,
+      titleAr: optionalText(formData.get("titleAr")) ?? titleFr,
+      note: optionalText(formData.get("note")),
+    },
+  });
+
+  revalidatePath("/admin/honours");
+  revalidatePublicSite();
+  redirect("/admin/honours");
+}
+
+export async function deleteHonour(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+
+  await prisma.honour.delete({ where: { id } });
+  revalidatePath("/admin/honours");
   revalidatePublicSite();
 }
 

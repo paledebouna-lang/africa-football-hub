@@ -101,6 +101,17 @@
     "confidence": "Fiabilité : {percent} % des critères ont pu être calculés.",
     "manual": "Valeur fixée par la rédaction"
   },
+  "honours": {
+    "title": "Palmarès",
+    "none": "Aucun titre enregistré."
+  },
+  "honourType": {
+    "WINNER": "Vainqueur",
+    "RUNNER_UP": "Finaliste",
+    "THIRD_PLACE": "Troisième place",
+    "PROMOTION": "Montée",
+    "INDIVIDUAL_AWARD": "Distinction"
+  },
   "valuationCriterion": {
     "performance": "Performances et temps de jeu",
     "age": "Âge et trajectoire",

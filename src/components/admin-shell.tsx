@@ -8,6 +8,7 @@ const NAV = [
   { href: "/admin/players", label: "Joueurs" },
   { href: "/admin/coaches", label: "Entraîneurs" },
   { href: "/admin/transfers", label: "Transferts" },
+  { href: "/admin/honours", label: "Palmarès" },
 ] as const;
 
 export function AdminShell({

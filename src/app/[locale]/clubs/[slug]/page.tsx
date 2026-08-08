@@ -9,6 +9,7 @@ import { groupByAgeCategory } from "@/lib/categories";
 import { ProfileHeader, Badge, DataGrid, DataPoint } from "@/components/profile-header";
 import { DataTable, SectionTitle } from "@/components/data-table";
 import { Crest, PlayerPhoto, Flag } from "@/components/ui/media";
+import { HonoursList } from "@/components/honours-list";
 
 export default async function ClubPage({
   params,
@@ -116,6 +117,18 @@ export default async function ClubPage({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {club.honours.length > 0 && (
+        <section>
+          <SectionTitle>{t("honours.title")}</SectionTitle>
+          <HonoursList
+            honours={club.honours}
+            locale={locale}
+            typeLabel={(type) => t(`honourType.${type}`)}
+            emptyLabel={t("honours.none")}
+          />
         </section>
       )}
 

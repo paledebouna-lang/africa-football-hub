@@ -101,6 +101,17 @@
     "confidence": "Reliability: {percent}% of criteria could be computed.",
     "manual": "Value set by the editorial team"
   },
+  "honours": {
+    "title": "Honours",
+    "none": "No honours recorded."
+  },
+  "honourType": {
+    "WINNER": "Winner",
+    "RUNNER_UP": "Runner-up",
+    "THIRD_PLACE": "Third place",
+    "PROMOTION": "Promotion",
+    "INDIVIDUAL_AWARD": "Award"
+  },
   "valuationCriterion": {
     "performance": "Performances and playing time",
     "age": "Age and trajectory",

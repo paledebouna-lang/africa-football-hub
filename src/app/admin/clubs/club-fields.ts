@@ -11,6 +11,7 @@ type ClubDefaults = {
   stadium?: string | null;
   founded?: number | null;
   logoUrl?: string | null;
+  teamPhotoUrl?: string | null;
   websiteUrl?: string | null;
   fifaCategory?: number | null;
   primaryCompetitionId?: string | null;
@@ -94,6 +95,13 @@ export function clubFields(
       label: "Adresse du logo",
       defaultValue: defaults.logoUrl ?? "",
       hint: "Lien direct vers une image (https://...).",
+    },
+    {
+      kind: "url",
+      name: "teamPhotoUrl",
+      label: "Photo d'équipe",
+      defaultValue: defaults.teamPhotoUrl ?? "",
+      hint: "Lien direct vers une photo de groupe (https://...).",
     },
     {
       kind: "url",

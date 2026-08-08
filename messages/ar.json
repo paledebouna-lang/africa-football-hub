@@ -101,6 +101,17 @@
     "confidence": "الموثوقية: تم احتساب {percent}٪ من المعايير.",
     "manual": "قيمة حددتها هيئة التحرير"
   },
+  "honours": {
+    "title": "الألقاب",
+    "none": "لا توجد ألقاب مسجلة."
+  },
+  "honourType": {
+    "WINNER": "بطل",
+    "RUNNER_UP": "وصيف",
+    "THIRD_PLACE": "المركز الثالث",
+    "PROMOTION": "صعود",
+    "INDIVIDUAL_AWARD": "جائزة فردية"
+  },
   "valuationCriterion": {
     "performance": "الأداء ووقت اللعب",
     "age": "العمر والمسار",
