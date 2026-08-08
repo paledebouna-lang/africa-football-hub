@@ -1,7 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { site } from "@/lib/site";
 import { formatUsd, formatDate } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
 import {
@@ -9,6 +8,8 @@ import {
   getLatestTransfers,
   getTopValuedPlayers,
 } from "@/lib/queries";
+import { SectionTitle } from "@/components/data-table";
+import { Crest, PlayerPhoto, Flag } from "@/components/ui/media";
 
 export default async function HomePage({
   params,
@@ -32,43 +33,61 @@ export default async function HomePage({
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-10">
-      <section className="rounded-xl bg-brand text-white px-6 py-10">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {t("home.heroTitle")}
-        </h1>
-        <p className="mt-3 max-w-2xl text-white/90">{t("home.heroSubtitle")}</p>
-        <Link
-          href="/competitions"
-          className="mt-6 inline-block rounded-md bg-white px-4 py-2 text-sm font-medium text-brand-strong hover:bg-white/90 transition-colors"
-        >
-          {t("home.browseLeagues")}
-        </Link>
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-6">
+      <section className="overflow-hidden rounded-lg bg-brand-strong text-white">
+        <div className="px-6 py-10 sm:px-10 sm:py-14">
+          <h1 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
+            {t("home.heroTitle")}
+          </h1>
+          <p className="mt-3 max-w-2xl text-white/85">{t("home.heroSubtitle")}</p>
+          <Link
+            href="/competitions"
+            className="mt-6 inline-block rounded bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:brightness-110"
+          >
+            {t("home.browseLeagues")}
+          </Link>
+        </div>
+        <div className="h-1.5 bg-accent" />
       </section>
 
       <section>
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold">{t("home.leagues")}</h2>
-          <Link href="/competitions" className="text-sm text-brand hover:underline">
+        <div className="mb-3 flex items-baseline justify-between">
+          <SectionTitle>{t("home.leagues")}</SectionTitle>
+          <Link
+            href="/competitions"
+            className="text-sm font-medium text-brand hover:underline"
+          >
             {t("home.viewAll")}
           </Link>
         </div>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {leagues.map((league) => (
             <li key={league.id}>
               <Link
                 href={`/competitions/${league.slug}`}
-                className="block rounded-lg border border-border bg-surface p-4 hover:border-brand transition-colors"
+                className="flex h-full items-center gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:border-brand"
               >
-                <p className="text-sm text-muted">
-                  {league.country
-                    ? localizedName(league.country, locale)
-                    : t("competition.continental")}
-                </p>
-                <p className="font-medium">{localizedName(league, locale)}</p>
-                <p className="mt-1 text-sm text-muted">
-                  {t("league.clubCount", { count: league._count.primaryClubs })}
-                </p>
+                <Crest src={league.logoUrl} name={league.nameFr} size="lg" />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 text-sm text-muted">
+                    {league.country && (
+                      <Flag
+                        src={league.country.flagUrl}
+                        label={localizedName(league.country, locale)}
+                      />
+                    )}
+                    {league.country
+                      ? localizedName(league.country, locale)
+                      : t("competition.continental")}
+                  </span>
+                  <span className="mt-0.5 block font-semibold">
+                    {localizedName(league, locale)}
+                  </span>
+                  <span className="mt-0.5 block text-sm text-muted">
+                    {t("league.clubCount", { count: league._count.primaryClubs })}
+                  </span>
+                </span>
               </Link>
             </li>
           ))}
@@ -77,35 +96,43 @@ export default async function HomePage({
 
       <div className="grid gap-8 lg:grid-cols-2">
         <section>
-          <h2 className="text-xl font-semibold">{t("home.latestTransfers")}</h2>
+          <SectionTitle>{t("home.latestTransfers")}</SectionTitle>
           {transfers.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">{t("home.emptyState")}</p>
+            <p className="text-sm text-muted">{t("home.emptyState")}</p>
           ) : (
-            <ul className="mt-4 divide-y divide-border rounded-lg border border-border bg-surface">
+            <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
               {transfers.map((transfer) => (
-                <li key={transfer.id} className="p-3 text-sm">
-                  <div className="flex items-center justify-between gap-3">
+                <li key={transfer.id} className="flex items-center gap-3 p-3 text-sm">
+                  <PlayerPhoto
+                    src={transfer.player.photoUrl}
+                    name={playerName(transfer.player, locale)}
+                    size="md"
+                  />
+                  <span className="min-w-0 flex-1">
                     <Link
                       href={`/players/${transfer.player.slug}`}
                       className="font-medium hover:text-brand"
                     >
                       {playerName(transfer.player, locale)}
                     </Link>
-                    <span className="text-muted shrink-0">
+                    <span className="block text-muted">
+                      {transfer.fromClub
+                        ? localizedName(transfer.fromClub, locale)
+                        : "—"}
+                      {" → "}
+                      {transfer.toClub ? localizedName(transfer.toClub, locale) : "—"}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-end">
+                    <span className="block font-semibold tabular-nums">
                       {transfer.isFeeUndisclosed
                         ? t("transfers.undisclosed")
                         : formatUsd(transfer.feeUsd, locale)}
                     </span>
-                  </div>
-                  <p className="mt-1 text-muted">
-                    {transfer.fromClub
-                      ? localizedName(transfer.fromClub, locale)
-                      : "—"}
-                    {" → "}
-                    {transfer.toClub ? localizedName(transfer.toClub, locale) : "—"}
-                    {" · "}
-                    {formatDate(transfer.date, locale)}
-                  </p>
+                    <span className="block text-xs text-muted">
+                      {formatDate(transfer.date, locale)}
+                    </span>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -113,26 +140,38 @@ export default async function HomePage({
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold">{t("home.topValues")}</h2>
+          <SectionTitle>{t("home.topValues")}</SectionTitle>
           {topPlayers.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">{t("home.emptyState")}</p>
+            <p className="text-sm text-muted">{t("home.emptyState")}</p>
           ) : (
-            <ol className="mt-4 divide-y divide-border rounded-lg border border-border bg-surface">
+            <ol className="divide-y divide-border rounded-lg border border-border bg-surface">
               {topPlayers.map(({ player, value }, index) => (
                 <li
                   key={player.id}
-                  className="flex items-center justify-between gap-3 p-3 text-sm"
+                  className="flex items-center gap-3 p-3 text-sm hover:bg-brand/5"
                 >
-                  <span className="flex items-center gap-3 min-w-0">
-                    <span className="text-muted tabular-nums w-4">{index + 1}</span>
+                  <span className="w-5 shrink-0 text-center font-bold tabular-nums text-muted">
+                    {index + 1}
+                  </span>
+                  <PlayerPhoto
+                    src={player.photoUrl}
+                    name={playerName(player, locale)}
+                    size="md"
+                  />
+                  <span className="min-w-0 flex-1">
                     <Link
                       href={`/players/${player.slug}`}
-                      className="font-medium truncate hover:text-brand"
+                      className="block truncate font-medium hover:text-brand"
                     >
                       {playerName(player, locale)}
                     </Link>
+                    {player.club && (
+                      <span className="block truncate text-muted">
+                        {localizedName(player.club, locale)}
+                      </span>
+                    )}
                   </span>
-                  <span className="shrink-0 font-medium text-brand">
+                  <span className="shrink-0 font-bold tabular-nums text-brand">
                     {formatUsd(value, locale)}
                   </span>
                 </li>
@@ -141,8 +180,6 @@ export default async function HomePage({
           )}
         </section>
       </div>
-
-      <p className="text-xs text-muted">{site.tagline[locale]}</p>
     </div>
   );
 }

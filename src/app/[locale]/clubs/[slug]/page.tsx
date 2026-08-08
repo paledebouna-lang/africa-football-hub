@@ -6,6 +6,9 @@ import { formatUsd, formatDate, ageFrom } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
 import { getClubBySlug, currentValueOf, squadValue } from "@/lib/queries";
 import { groupByAgeCategory } from "@/lib/categories";
+import { ProfileHeader, Badge, DataGrid, DataPoint } from "@/components/profile-header";
+import { DataTable, SectionTitle } from "@/components/data-table";
+import { Crest, PlayerPhoto, Flag } from "@/components/ui/media";
 
 export default async function ClubPage({
   params,
@@ -19,64 +22,76 @@ export default async function ClubPage({
   const club = await getClubBySlug(slug);
   if (!club) notFound();
 
+  const clubName = localizedName(club, locale);
   const total = squadValue(club.players);
   const squadGroups = groupByAgeCategory(club.players);
   const isAcademy = club.type === "ACADEMY";
+  const country = club.primaryCompetition?.country ?? null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
-      <header>
-        <p className="text-sm text-muted">
-          {isAcademy && (
-            <span className="me-2 rounded bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
-              {t("club.academy")}
-            </span>
-          )}
-          {club.primaryCompetition ? (
-            <>
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
+      <ProfileHeader
+        media={<Crest src={club.logoUrl} name={clubName} size="xl" />}
+        breadcrumb={
+          club.primaryCompetition ? (
+            <span className="inline-flex items-center gap-1.5">
+              {country && (
+                <Flag
+                  src={country.flagUrl}
+                  label={localizedName(country, locale)}
+                />
+              )}
               <Link
                 href={`/competitions/${club.primaryCompetition.slug}`}
                 className="hover:text-brand"
               >
                 {localizedName(club.primaryCompetition, locale)}
               </Link>
-              {club.primaryCompetition.country &&
-                ` · ${localizedName(club.primaryCompetition.country, locale)}`}
-            </>
+            </span>
           ) : club.parentClub ? (
             <Link href={`/clubs/${club.parentClub.slug}`} className="hover:text-brand">
               {t("club.parentClub")} : {localizedName(club.parentClub, locale)}
             </Link>
-          ) : null}
-        </p>
-        <h1 className="text-2xl font-bold">{localizedName(club, locale)}</h1>
-      </header>
+          ) : null
+        }
+        title={clubName}
+        subtitle={club.city ?? undefined}
+        badges={
+          <>
+            {isAcademy && <Badge tone="accent">{t("club.academy")}</Badge>}
+            {club.fifaCategory !== null && (
+              <Badge>FIFA {"I".repeat(club.fifaCategory)}</Badge>
+            )}
+            {club.founded !== null && <Badge>{club.founded}</Badge>}
+          </>
+        }
+        figureLabel={t("club.totalValue")}
+        figure={total > 0 ? formatUsd(total, locale) : "—"}
+      />
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <InfoCard label={t("club.city")} value={club.city ?? "—"} />
-        <InfoCard label={t("club.stadium")} value={club.stadium ?? "—"} />
-        <InfoCard
-          label={t("club.founded")}
-          value={club.founded ? String(club.founded) : "—"}
-        />
-        <InfoCard
-          label={t("club.totalValue")}
-          value={total > 0 ? formatUsd(total, locale) : "—"}
-        />
-      </section>
+      <DataGrid>
+        <DataPoint label={t("club.city")}>{club.city ?? "—"}</DataPoint>
+        <DataPoint label={t("club.stadium")}>{club.stadium ?? "—"}</DataPoint>
+        <DataPoint label={t("club.founded")}>{club.founded ?? "—"}</DataPoint>
+        <DataPoint label={t("league.squadSize")}>{club.players.length}</DataPoint>
+      </DataGrid>
 
       {club.entries.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold">
-            {t("club.competitions", { season: "" }).trim()}
-          </h2>
-          <ul className="mt-4 flex flex-wrap gap-2">
+          <SectionTitle>{t("club.competitions", { season: "" }).trim()}</SectionTitle>
+          <ul className="flex flex-wrap gap-2">
             {club.entries.map((entry) => (
               <li key={entry.id}>
                 <Link
                   href={`/competitions/${entry.competition.slug}`}
-                  className="inline-block rounded-full border border-border bg-surface px-3 py-1 text-sm hover:border-brand transition-colors"
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-sm transition-colors hover:border-brand"
                 >
+                  {entry.competition.country && (
+                    <Flag
+                      src={entry.competition.country.flagUrl}
+                      label={localizedName(entry.competition.country, locale)}
+                    />
+                  )}
                   {localizedName(entry.competition, locale)}
                 </Link>
               </li>
@@ -87,14 +102,15 @@ export default async function ClubPage({
 
       {club.academies.length > 0 && (
         <section>
-          <h2 className="text-xl font-semibold">{t("club.academies")}</h2>
-          <ul className="mt-4 flex flex-wrap gap-2">
+          <SectionTitle>{t("club.academies")}</SectionTitle>
+          <ul className="flex flex-wrap gap-2">
             {club.academies.map((academy) => (
               <li key={academy.id}>
                 <Link
                   href={`/clubs/${academy.slug}`}
-                  className="inline-block rounded-full border border-border bg-surface px-3 py-1 text-sm hover:border-brand transition-colors"
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-sm transition-colors hover:border-brand"
                 >
+                  <Crest src={academy.logoUrl} name={academy.nameFr} size="sm" />
                   {localizedName(academy, locale)}
                 </Link>
               </li>
@@ -104,63 +120,74 @@ export default async function ClubPage({
       )}
 
       <section>
-        <h2 className="text-xl font-semibold">{t("club.squad")}</h2>
+        <SectionTitle>{t("club.squad")}</SectionTitle>
         {squadGroups.length === 0 ? (
-          <p className="mt-4 text-sm text-muted">{t("club.noPlayers")}</p>
+          <p className="text-sm text-muted">{t("club.noPlayers")}</p>
         ) : (
-          <div className="mt-4 space-y-6">
+          <div className="space-y-5">
             {squadGroups.map((group) => (
               <div key={group.category}>
-                <h3 className="text-sm font-semibold text-muted uppercase tracking-wide">
+                <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">
                   {t(`ageCategory.${group.category}`)}
+                  <span className="ms-2 font-normal normal-case">
+                    ({group.players.length})
+                  </span>
                 </h3>
-                <div className="mt-2 overflow-x-auto rounded-lg border border-border bg-surface">
-                  <table className="w-full text-sm">
-                    <thead className="border-b border-border text-muted">
-                      <tr>
-                        <th className="px-4 py-3 text-start font-medium">#</th>
-                        <th className="px-4 py-3 text-start font-medium">
-                          {t("transfers.player")}
-                        </th>
-                        <th className="px-4 py-3 text-start font-medium">
-                          {t("player.position")}
-                        </th>
-                        <th className="px-4 py-3 text-end font-medium">
-                          {t("player.age")}
-                        </th>
-                        <th className="px-4 py-3 text-end font-medium">
-                          {t("player.marketValue")}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {group.players.map((player) => (
-                        <tr key={player.id}>
-                          <td className="px-4 py-3 text-muted tabular-nums">
-                            {player.shirtNumber ?? "—"}
-                          </td>
-                          <td className="px-4 py-3">
-                            <Link
-                              href={`/players/${player.slug}`}
-                              className="font-medium hover:text-brand"
-                            >
-                              {playerName(player, locale)}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-3 text-muted">
-                            {player.position ? t(`position.${player.position}`) : "—"}
-                          </td>
-                          <td className="px-4 py-3 text-end tabular-nums">
-                            {ageFrom(player.dateOfBirth) ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-end tabular-nums font-medium">
-                            {formatUsd(currentValueOf(player), locale)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <DataTable
+                  headers={[
+                    { label: "#", align: "center" },
+                    { label: t("transfers.player") },
+                    { label: t("player.position") },
+                    { label: t("player.nationality") },
+                    { label: t("player.age"), align: "end" },
+                    { label: t("player.marketValue"), align: "end" },
+                  ]}
+                >
+                  {group.players.map((player) => (
+                    <tr key={player.id} className="hover:bg-brand/5">
+                      <td className="px-3 py-2 text-center tabular-nums text-muted">
+                        {player.shirtNumber ?? "—"}
+                      </td>
+                      <td className="px-3 py-2">
+                        <Link
+                          href={`/players/${player.slug}`}
+                          className="inline-flex items-center gap-2.5 font-medium hover:text-brand"
+                        >
+                          <PlayerPhoto
+                            src={player.photoUrl}
+                            name={playerName(player, locale)}
+                            size="sm"
+                          />
+                          {playerName(player, locale)}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2 text-muted">
+                        {player.position ? t(`position.${player.position}`) : "—"}
+                      </td>
+                      <td className="px-3 py-2">
+                        {player.nationality ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Flag
+                              src={player.nationality.flagUrl}
+                              label={localizedName(player.nationality, locale)}
+                            />
+                            <span className="text-muted">
+                              {localizedName(player.nationality, locale)}
+                            </span>
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-end tabular-nums">
+                        {ageFrom(player.dateOfBirth) ?? "—"}
+                      </td>
+                      <td className="px-3 py-2 text-end font-semibold tabular-nums text-brand">
+                        {formatUsd(currentValueOf(player), locale)}
+                      </td>
+                    </tr>
+                  ))}
+                </DataTable>
               </div>
             ))}
           </div>
@@ -168,30 +195,36 @@ export default async function ClubPage({
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold">{t("coach.staff")}</h2>
+        <SectionTitle>{t("coach.staff")}</SectionTitle>
         {club.coachSpells.length === 0 ? (
-          <p className="mt-4 text-sm text-muted">{t("coach.noStaff")}</p>
+          <p className="text-sm text-muted">{t("coach.noStaff")}</p>
         ) : (
-          <ul className="mt-4 divide-y divide-border rounded-lg border border-border bg-surface">
+          <DataTable
+            headers={[{ label: t("coach.title") }, { label: t("coach.role") }]}
+          >
             {club.coachSpells.map((spell) => (
-              <li
-                key={spell.id}
-                className="flex items-center justify-between gap-3 p-3 text-sm"
-              >
-                <Link
-                  href={`/coaches/${spell.coach.slug}`}
-                  className="font-medium hover:text-brand"
-                >
-                  {spell.coach.name}
-                </Link>
-                <span className="text-muted">{t(`coachRole.${spell.role}`)}</span>
-              </li>
+              <tr key={spell.id} className="hover:bg-brand/5">
+                <td className="px-3 py-2">
+                  <Link
+                    href={`/coaches/${spell.coach.slug}`}
+                    className="inline-flex items-center gap-2.5 font-medium hover:text-brand"
+                  >
+                    <PlayerPhoto
+                      src={spell.coach.photoUrl}
+                      name={spell.coach.name}
+                      size="sm"
+                    />
+                    {spell.coach.name}
+                  </Link>
+                </td>
+                <td className="px-3 py-2 text-muted">{t(`coachRole.${spell.role}`)}</td>
+              </tr>
             ))}
-          </ul>
+          </DataTable>
         )}
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <TransferList
           title={t("club.arrivals")}
           empty={t("player.noTransfers")}
@@ -199,6 +232,7 @@ export default async function ClubPage({
             id: transfer.id,
             playerSlug: transfer.player.slug,
             playerLabel: playerName(transfer.player, locale),
+            photoUrl: transfer.player.photoUrl,
             otherClub: transfer.fromClub
               ? localizedName(transfer.fromClub, locale)
               : "—",
@@ -215,6 +249,7 @@ export default async function ClubPage({
             id: transfer.id,
             playerSlug: transfer.player.slug,
             playerLabel: playerName(transfer.player, locale),
+            photoUrl: transfer.player.photoUrl,
             otherClub: transfer.toClub ? localizedName(transfer.toClub, locale) : "—",
             date: formatDate(transfer.date, locale),
             fee: transfer.isFeeUndisclosed
@@ -227,19 +262,11 @@ export default async function ClubPage({
   );
 }
 
-function InfoCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-1 font-medium">{value}</p>
-    </div>
-  );
-}
-
 type TransferRow = {
   id: string;
   playerSlug: string;
   playerLabel: string;
+  photoUrl: string | null;
   otherClub: string;
   date: string;
   fee: string;
@@ -256,25 +283,26 @@ function TransferList({
 }) {
   return (
     <section>
-      <h2 className="text-xl font-semibold">{title}</h2>
+      <SectionTitle>{title}</SectionTitle>
       {rows.length === 0 ? (
-        <p className="mt-4 text-sm text-muted">{empty}</p>
+        <p className="text-sm text-muted">{empty}</p>
       ) : (
-        <ul className="mt-4 divide-y divide-border rounded-lg border border-border bg-surface">
+        <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
           {rows.map((row) => (
-            <li key={row.id} className="p-3 text-sm">
-              <div className="flex items-center justify-between gap-3">
+            <li key={row.id} className="flex items-center gap-3 p-3 text-sm">
+              <PlayerPhoto src={row.photoUrl} name={row.playerLabel} size="md" />
+              <span className="min-w-0 flex-1">
                 <Link
                   href={`/players/${row.playerSlug}`}
                   className="font-medium hover:text-brand"
                 >
                   {row.playerLabel}
                 </Link>
-                <span className="shrink-0 text-muted">{row.fee}</span>
-              </div>
-              <p className="mt-1 text-muted">
-                {row.otherClub} · {row.date}
-              </p>
+                <span className="block text-muted">
+                  {row.otherClub} · {row.date}
+                </span>
+              </span>
+              <span className="shrink-0 font-semibold tabular-nums">{row.fee}</span>
             </li>
           ))}
         </ul>

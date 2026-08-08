@@ -32,7 +32,7 @@ export function SearchBox({
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm placeholder:text-muted focus:border-brand focus:outline-none"
+        className="w-full rounded border-0 bg-white/15 px-3 py-1.5 text-sm text-white placeholder:text-white/60 focus:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white/40"
       />
     </form>
   );

@@ -20,7 +20,7 @@ export function LocaleSwitcher({ currentLocale }: { currentLocale: Locale }) {
           router.replace(pathname, { locale: nextLocale });
         });
       }}
-      className="rounded-md border border-border bg-surface px-2 py-1 text-sm"
+      className="rounded border-0 bg-white/15 px-2 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40 [&>option]:text-foreground"
     >
       {locales.map((locale) => (
         <option key={locale} value={locale}>

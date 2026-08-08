@@ -30,6 +30,8 @@ type CompetitionSeed = {
 
 type CountrySeed = {
   code: string;
+  /** Two-letter code, used to build the flag image URL. */
+  iso2: string;
   nameFr: string;
   nameEn: string;
   nameAr: string;
@@ -37,6 +39,10 @@ type CountrySeed = {
   cup: CompetitionSeed;
   clubs: ClubSeed[];
 };
+
+function flagUrlFor(iso2: string): string {
+  return `https://flagcdn.com/w40/${iso2.toLowerCase()}.png`;
+}
 
 /**
  * Strength coefficients are ordinal, not absolute: they rank the level of
@@ -47,6 +53,7 @@ type CountrySeed = {
 const COUNTRIES: CountrySeed[] = [
   {
     code: "MAR",
+    iso2: "ma",
     nameFr: "Maroc",
     nameEn: "Morocco",
     nameAr: "المغرب",
@@ -63,6 +70,7 @@ const COUNTRIES: CountrySeed[] = [
   },
   {
     code: "EGY",
+    iso2: "eg",
     nameFr: "Égypte",
     nameEn: "Egypt",
     nameAr: "مصر",
@@ -78,6 +86,7 @@ const COUNTRIES: CountrySeed[] = [
   },
   {
     code: "DZA",
+    iso2: "dz",
     nameFr: "Algérie",
     nameEn: "Algeria",
     nameAr: "الجزائر",
@@ -93,6 +102,7 @@ const COUNTRIES: CountrySeed[] = [
   },
   {
     code: "TUN",
+    iso2: "tn",
     nameFr: "Tunisie",
     nameEn: "Tunisia",
     nameAr: "تونس",
@@ -108,6 +118,7 @@ const COUNTRIES: CountrySeed[] = [
   },
   {
     code: "ZAF",
+    iso2: "za",
     nameFr: "Afrique du Sud",
     nameEn: "South Africa",
     nameAr: "جنوب أفريقيا",
@@ -123,6 +134,7 @@ const COUNTRIES: CountrySeed[] = [
   },
   {
     code: "SEN",
+    iso2: "sn",
     nameFr: "Sénégal",
     nameEn: "Senegal",
     nameAr: "السنغال",
@@ -139,6 +151,7 @@ const COUNTRIES: CountrySeed[] = [
   },
   {
     code: "CIV",
+    iso2: "ci",
     nameFr: "Côte d'Ivoire",
     nameEn: "Ivory Coast",
     nameAr: "ساحل العاج",
@@ -155,6 +168,7 @@ const COUNTRIES: CountrySeed[] = [
   },
   {
     code: "GHA",
+    iso2: "gh",
     nameFr: "Ghana",
     nameEn: "Ghana",
     nameAr: "غانا",
@@ -171,6 +185,7 @@ const COUNTRIES: CountrySeed[] = [
   },
   {
     code: "NGA",
+    iso2: "ng",
     nameFr: "Nigeria",
     nameEn: "Nigeria",
     nameAr: "نيجيريا",
@@ -255,13 +270,19 @@ async function main() {
   for (const country of COUNTRIES) {
     const countryRecord = await prisma.country.upsert({
       where: { code: country.code },
-      update: { nameFr: country.nameFr, nameEn: country.nameEn, nameAr: country.nameAr },
+      update: {
+        nameFr: country.nameFr,
+        nameEn: country.nameEn,
+        nameAr: country.nameAr,
+        flagUrl: flagUrlFor(country.iso2),
+      },
       create: {
         code: country.code,
         slug: slugify(country.nameEn),
         nameFr: country.nameFr,
         nameEn: country.nameEn,
         nameAr: country.nameAr,
+        flagUrl: flagUrlFor(country.iso2),
       },
     });
 

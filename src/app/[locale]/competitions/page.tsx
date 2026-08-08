@@ -6,6 +6,7 @@ import { localizedName } from "@/lib/localized";
 import { getCompetitions } from "@/lib/queries";
 import { CompetitionFiltersForm } from "@/components/competition-filters-form";
 import { COMPETITION_TYPES } from "@/lib/categories";
+import { Crest, Flag } from "@/components/ui/media";
 
 export default async function CompetitionsPage({
   params,
@@ -54,19 +55,34 @@ export default async function CompetitionsPage({
             <li key={competition.id}>
               <Link
                 href={`/competitions/${competition.slug}`}
-                className="block h-full rounded-lg border border-border bg-surface p-4 hover:border-brand transition-colors"
+                className="flex h-full items-center gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:border-brand"
               >
-                <p className="text-sm text-muted">
-                  {competition.country
-                    ? localizedName(competition.country, locale)
-                    : t("competition.continental")}
-                </p>
-                <p className="font-medium">{localizedName(competition, locale)}</p>
-                <p className="mt-1 text-sm text-muted">
-                  {t(`competitionType.${competition.type}`)}
-                  {competition.ageCategory !== "SENIOR" &&
-                    ` · ${t(`ageCategory.${competition.ageCategory}`)}`}
-                </p>
+                <Crest
+                  src={competition.logoUrl}
+                  name={competition.nameFr}
+                  size="lg"
+                />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 text-sm text-muted">
+                    {competition.country && (
+                      <Flag
+                        src={competition.country.flagUrl}
+                        label={localizedName(competition.country, locale)}
+                      />
+                    )}
+                    {competition.country
+                      ? localizedName(competition.country, locale)
+                      : t("competition.continental")}
+                  </span>
+                  <span className="mt-0.5 block font-semibold">
+                    {localizedName(competition, locale)}
+                  </span>
+                  <span className="mt-0.5 block text-sm text-muted">
+                    {t(`competitionType.${competition.type}`)}
+                    {competition.ageCategory !== "SENIOR" &&
+                      ` · ${t(`ageCategory.${competition.ageCategory}`)}`}
+                  </span>
+                </span>
               </Link>
             </li>
           ))}

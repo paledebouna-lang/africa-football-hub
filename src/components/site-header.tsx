@@ -14,45 +14,51 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
   ] as const;
 
   return (
-    <header className="border-b border-border bg-surface">
-      <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-3">
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span
-            aria-hidden
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-brand text-white font-bold text-sm"
-          >
-            AF
-          </span>
-          <span className="font-semibold tracking-tight">{site.name}</span>
-        </Link>
+    <header>
+      {/* Brand bar: the deep blue anchors the identity, the red rule marks it. */}
+      <div className="bg-brand-strong text-white">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5">
+            <span
+              aria-hidden
+              className="inline-flex h-9 w-9 items-center justify-center rounded bg-white text-sm font-black text-brand-strong"
+            >
+              AF
+            </span>
+            <span className="text-lg font-bold tracking-tight">{site.name}</span>
+          </Link>
 
-        <nav className="flex items-center gap-4 text-sm">
+          <div className="order-last w-full sm:order-none sm:w-auto sm:flex-1">
+            <SearchBox placeholder={t("searchPlaceholder")} label={t("search")} />
+          </div>
+
+          <div className="flex shrink-0 items-center gap-4">
+            <a
+              href="/admin"
+              className="text-sm text-white/80 transition-colors hover:text-white"
+            >
+              {t("admin")}
+            </a>
+            <LocaleSwitcher currentLocale={locale} />
+          </div>
+        </div>
+      </div>
+
+      <div className="h-1 bg-accent" />
+
+      <nav className="border-b border-border bg-surface">
+        <div className="mx-auto flex max-w-6xl items-center gap-6 px-4">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-muted hover:text-foreground transition-colors"
+              className="border-b-2 border-transparent py-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-foreground"
             >
               {link.label}
             </Link>
           ))}
-        </nav>
-
-        <div className="flex-1 min-w-[12rem]">
-          <SearchBox placeholder={t("searchPlaceholder")} label={t("search")} />
         </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          {/* Admin lives outside the localized routes, so it needs a plain anchor. */}
-          <a
-            href="/admin"
-            className="text-sm text-muted hover:text-foreground transition-colors"
-          >
-            {t("admin")}
-          </a>
-          <LocaleSwitcher currentLocale={locale} />
-        </div>
-      </div>
+      </nav>
     </header>
   );
 }
