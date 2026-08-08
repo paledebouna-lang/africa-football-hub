@@ -31,6 +31,12 @@ export type Field =
       label: string;
       defaultChecked?: boolean;
       hint?: string;
+    }
+  | {
+      kind: "hidden";
+      name: string;
+      label: string;
+      defaultValue?: string;
     };
 
 export function AdminForm({
@@ -55,8 +61,21 @@ export function AdminForm({
     <form action={formAction} className="space-y-5">
       {id && <input type="hidden" name="id" value={id} />}
 
+      {fields
+        .filter((field) => field.kind === "hidden")
+        .map((field) => (
+          <input
+            key={field.name}
+            type="hidden"
+            name={field.name}
+            value={field.defaultValue ?? ""}
+          />
+        ))}
+
       <div className="grid gap-4 sm:grid-cols-2">
-        {fields.map((field) => (
+        {fields
+          .filter((field) => field.kind !== "hidden")
+          .map((field) => (
           <div
             key={field.name}
             className={field.kind === "checkbox" ? "sm:col-span-2" : undefined}
@@ -108,7 +127,7 @@ export function AdminForm({
 
             {field.hint && <p className="mt-1 text-xs text-muted">{field.hint}</p>}
           </div>
-        ))}
+          ))}
       </div>
 
       {state?.error && (

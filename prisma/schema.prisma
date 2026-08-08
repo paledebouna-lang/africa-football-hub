@@ -26,6 +26,46 @@ enum Foot {
   BOTH
 }
 
+enum AgeCategory {
+  SENIOR
+  U23
+  U20
+  U19
+  U17
+  U15
+}
+
+enum CompetitionType {
+  LEAGUE
+  CUP
+  SUPER_CUP
+  CONTINENTAL
+  INTERNATIONAL
+  YOUTH
+}
+
+enum ClubType {
+  CLUB
+  ACADEMY
+}
+
+enum CoachRole {
+  HEAD_COACH
+  ASSISTANT
+  GOALKEEPING
+  FITNESS
+  ANALYST
+  ACADEMY_DIRECTOR
+  SCOUT
+}
+
+enum VideoType {
+  HIGHLIGHTS
+  MATCH
+  INTERVIEW
+  SKILLS
+}
+
 enum TransferType {
   PERMANENT
   LOAN
@@ -40,6 +80,20 @@ enum ProposalStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+enum ValuationSource {
+  MANUAL
+  ALGORITHM
+}
+
+enum Confederation {
+  CAF
+  UEFA
+  CONMEBOL
+  AFC
+  CONCACAF
+  OFC
 }
 
 enum Role {
@@ -57,47 +111,72 @@ model Country {
   nameAr  String
   flagUrl String?
 
-  leagues     League[]
-  nationalsOf Player[] @relation("PlayerNationality")
+  competitions Competition[]
+  nationalsOf  Player[]                @relation("PlayerNationality")
+  coaches      Coach[]                 @relation("CoachNationality")
+  selections   NationalTeamSelection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model League {
-  id        String  @id @default(cuid())
-  slug      String  @unique
-  nameFr    String
-  nameEn    String
-  nameAr    String
-  tier      Int     @default(1)
-  logoUrl   String?
-  countryId String
+/// A league, cup, continental or international competition.
+/// countryId is null for competitions that span several countries (CAF, AFCON).
+model Competition {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  nameFr      String
+  nameEn      String
+  nameAr      String
+  type        CompetitionType @default(LEAGUE)
+  ageCategory AgeCategory     @default(SENIOR)
+  tier        Int             @default(1)
+  logoUrl     String?
+  countryId   String?
 
-  country Country @relation(fields: [countryId], references: [id], onDelete: Restrict)
-  clubs   Club[]
+  /// Relative strength, used to weight performances by the level actually faced.
+  /// 1.00 = strongest African domestic league; a second division sits near 0.40.
+  strengthCoefficient Float @default(1.0)
+
+  country      Country?          @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  primaryClubs Club[]            @relation("ClubPrimaryCompetition")
+  entries      ClubCompetition[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([countryId])
+  @@index([type])
 }
 
 model Club {
-  id        String  @id @default(cuid())
-  slug      String  @unique
-  nameFr    String
-  nameEn    String
-  nameAr    String
-  shortName String?
-  city      String?
-  stadium   String?
-  founded   Int?
-  logoUrl   String?
-  leagueId  String
+  id                    String   @id @default(cuid())
+  slug                  String   @unique
+  nameFr                String
+  nameEn                String
+  nameAr                String
+  shortName             String?
+  type                  ClubType @default(CLUB)
+  city                  String?
+  stadium               String?
+  founded               Int?
+  logoUrl               String?
+  websiteUrl            String?
+  primaryCompetitionId  String?
+  parentClubId          String?
 
-  league  League   @relation(fields: [leagueId], references: [id], onDelete: Restrict)
-  players Player[]
+  /// FIFA training category, 1 (largest investment) to 4 (grassroots), set by the
+  /// national association. Drives the training compensation owed for this club's
+  /// academy graduates. Null while unclassified.
+  fifaCategory Int?
+
+  primaryCompetition Competition? @relation("ClubPrimaryCompetition", fields: [primaryCompetitionId], references: [id], onDelete: SetNull)
+  parentClub         Club?        @relation("ClubAcademies", fields: [parentClubId], references: [id], onDelete: SetNull)
+  academies          Club[]       @relation("ClubAcademies")
+
+  players     Player[]
+  coachSpells CoachSpell[]
+  entries     ClubCompetition[]
 
   transfersIn  Transfer[] @relation("TransferToClub")
   transfersOut Transfer[] @relation("TransferFromClub")
@@ -105,17 +184,38 @@ model Club {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([leagueId])
+  @@index([primaryCompetitionId])
+  @@index([parentClubId])
+  @@index([type])
+}
+
+/// Which competitions a club takes part in, for a given season.
+model ClubCompetition {
+  id            String @id @default(cuid())
+  clubId        String
+  competitionId String
+  seasonId      String
+
+  club        Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  season      Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([clubId, competitionId, seasonId])
+  @@index([competitionId, seasonId])
+  @@index([clubId, seasonId])
 }
 
 model Player {
-  id            String    @id @default(cuid())
-  slug          String    @unique
+  id            String       @id @default(cuid())
+  slug          String       @unique
   name          String
   nameAr        String?
   dateOfBirth   DateTime?
   position      Position?
   foot          Foot?
+  ageCategory   AgeCategory  @default(SENIOR)
   heightCm      Int?
   shirtNumber   Int?
   contractUntil DateTime?
@@ -124,12 +224,14 @@ model Player {
   clubId        String?
   nationalityId String?
 
-  club         Club?    @relation(fields: [clubId], references: [id], onDelete: SetNull)
-  nationality  Country? @relation("PlayerNationality", fields: [nationalityId], references: [id], onDelete: SetNull)
+  club        Club?    @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  nationality Country? @relation("PlayerNationality", fields: [nationalityId], references: [id], onDelete: SetNull)
 
-  transfers     Transfer[]
-  marketValues  MarketValue[]
+  transfers      Transfer[]
+  marketValues   MarketValue[]
   valueProposals ValueProposal[]
+  videos         PlayerVideo[]
+  selections     NationalTeamSelection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,6 +239,100 @@ model Player {
   @@index([clubId])
   @@index([nationalityId])
   @@index([name])
+  @@index([ageCategory])
+}
+
+/// A player's involvement with a national team at a given level.
+model NationalTeamSelection {
+  id          String      @id @default(cuid())
+  playerId    String
+  countryId   String
+  level       AgeCategory @default(SENIOR)
+  caps        Int         @default(0)
+  goals       Int         @default(0)
+  isCurrent   Boolean     @default(false)
+  firstCallUp DateTime?
+
+  player  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  country Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([playerId, countryId, level])
+  @@index([playerId])
+}
+
+model PlayerVideo {
+  id       String    @id @default(cuid())
+  playerId String
+  url      String
+  title    String?
+  type     VideoType @default(HIGHLIGHTS)
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([playerId])
+}
+
+model Coach {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  name          String
+  nameAr        String?
+  dateOfBirth   DateTime?
+  photoUrl      String?
+  licence       String?
+  nationalityId String?
+
+  nationality Country? @relation("CoachNationality", fields: [nationalityId], references: [id], onDelete: SetNull)
+  spells      CoachSpell[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([nationalityId])
+}
+
+/// One stint of a coach at a club, in a given role. Open-ended while endDate is null.
+model CoachSpell {
+  id        String    @id @default(cuid())
+  coachId   String
+  clubId    String
+  role      CoachRole @default(HEAD_COACH)
+  startDate DateTime
+  endDate   DateTime?
+
+  coach Coach @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  club  Club  @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachId])
+  @@index([clubId, endDate])
+}
+
+/// FIFA indicative training costs, per confederation and club category.
+/// FIFA republishes these every year by circular, so they are stored as editable
+/// data rather than hardcoded: the admin updates them when the circular lands.
+model TrainingCostRate {
+  id            String        @id @default(cuid())
+  confederation Confederation
+  category      Int
+  amountEur     Int
+  year          Int
+  /// Circular the figures come from, e.g. "FIFA Circular 1936 (2025)".
+  source String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([confederation, category, year])
+  @@index([year])
 }
 
 model Season {
@@ -147,21 +343,22 @@ model Season {
   isCurrent Boolean  @default(false)
 
   transfers Transfer[]
+  entries   ClubCompetition[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Transfer {
-  id         String       @id @default(cuid())
-  playerId   String
-  fromClubId String?
-  toClubId   String?
-  seasonId   String?
-  date       DateTime
-  type       TransferType @default(PERMANENT)
-  feeEur     Int?
-  isFeeUndisclosed Boolean @default(false)
+  id               String       @id @default(cuid())
+  playerId         String
+  fromClubId       String?
+  toClubId         String?
+  seasonId         String?
+  date             DateTime
+  type             TransferType @default(PERMANENT)
+  feeEur           Int?
+  isFeeUndisclosed Boolean      @default(false)
 
   player   Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
   fromClub Club?   @relation("TransferFromClub", fields: [fromClubId], references: [id], onDelete: SetNull)
@@ -177,11 +374,20 @@ model Transfer {
 }
 
 model MarketValue {
-  id        String   @id @default(cuid())
-  playerId  String
-  valueEur  Int
-  effectiveAt DateTime @default(now())
-  note      String?
+  id          String          @id @default(cuid())
+  playerId    String
+  valueEur    Int
+  effectiveAt DateTime        @default(now())
+  note        String?
+  source      ValuationSource @default(MANUAL)
+
+  /// Share of the scoring criteria that could actually be computed, 0 to 1.
+  /// Surfaced on the player page so an estimate is never mistaken for a fact.
+  confidence Float?
+
+  /// Per-criterion contributions behind an ALGORITHM value, kept so the page
+  /// can explain the number instead of asserting it.
+  breakdown Json?
 
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
@@ -191,13 +397,13 @@ model MarketValue {
 }
 
 model UserProfile {
-  id        String   @id
-  username  String   @unique
-  email     String   @unique
-  role      Role     @default(USER)
-  isBanned  Boolean  @default(false)
+  id       String  @id
+  username String  @unique
+  email    String  @unique
+  role     Role    @default(USER)
+  isBanned Boolean @default(false)
 
-  proposals        ValueProposal[]
+  proposals         ValueProposal[]
   reviewedProposals ValueProposal[] @relation("ProposalReviewer")
 
   createdAt DateTime @default(now())
@@ -205,14 +411,14 @@ model UserProfile {
 }
 
 model ValueProposal {
-  id         String         @id @default(cuid())
-  playerId   String
-  userId     String
-  valueEur   Int
-  comment    String?
-  status     ProposalStatus @default(PENDING)
+  id           String         @id @default(cuid())
+  playerId     String
+  userId       String
+  valueEur     Int
+  comment      String?
+  status       ProposalStatus @default(PENDING)
   reviewedById String?
-  reviewedAt DateTime?
+  reviewedAt   DateTime?
 
   player     Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
   user       UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)

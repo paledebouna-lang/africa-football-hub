@@ -19,6 +19,15 @@ const FEET: FieldOption[] = [
   { value: "BOTH", label: "Les deux" },
 ];
 
+const AGE_CATEGORIES: FieldOption[] = [
+  { value: "SENIOR", label: "Seniors" },
+  { value: "U23", label: "Moins de 23 ans" },
+  { value: "U20", label: "Moins de 20 ans" },
+  { value: "U19", label: "Moins de 19 ans" },
+  { value: "U17", label: "Moins de 17 ans" },
+  { value: "U15", label: "Moins de 15 ans" },
+];
+
 function toDateInput(date: Date | null | undefined): string {
   if (!date) return "";
   return date.toISOString().slice(0, 10);
@@ -37,6 +46,7 @@ type PlayerDefaults = {
   photoUrl?: string | null;
   clubId?: string | null;
   nationalityId?: string | null;
+  ageCategory?: string;
 };
 
 export function playerFields(
@@ -75,6 +85,15 @@ export function playerFields(
       placeholder: "Non renseignée",
       options: countries,
       defaultValue: defaults.nationalityId ?? "",
+    },
+    {
+      kind: "select",
+      name: "ageCategory",
+      label: "Catégorie",
+      placeholder: "Seniors",
+      options: AGE_CATEGORIES,
+      defaultValue: defaults.ageCategory ?? "SENIOR",
+      hint: "Détermine le groupe dans lequel le joueur apparaît sur la fiche du club.",
     },
     {
       kind: "date",

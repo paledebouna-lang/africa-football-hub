@@ -9,19 +9,24 @@ export default async function AdminDashboard() {
     redirect("/admin/login");
   }
 
-  const [countries, leagues, clubs, players, transfers] = await Promise.all([
-    prisma.country.count(),
-    prisma.league.count(),
-    prisma.club.count(),
-    prisma.player.count(),
-    prisma.transfer.count(),
-  ]);
+  const [countries, competitions, clubs, academies, players, coaches, transfers] =
+    await Promise.all([
+      prisma.country.count(),
+      prisma.competition.count(),
+      prisma.club.count({ where: { type: "CLUB" } }),
+      prisma.club.count({ where: { type: "ACADEMY" } }),
+      prisma.player.count(),
+      prisma.coach.count(),
+      prisma.transfer.count(),
+    ]);
 
   const stats = [
     { label: "Pays", value: countries, href: null },
-    { label: "Championnats", value: leagues, href: null },
+    { label: "Compétitions", value: competitions, href: "/admin/competitions" },
     { label: "Clubs", value: clubs, href: "/admin/clubs" },
+    { label: "Centres de formation", value: academies, href: "/admin/clubs" },
     { label: "Joueurs", value: players, href: "/admin/players" },
+    { label: "Entraîneurs", value: coaches, href: "/admin/coaches" },
     { label: "Transferts", value: transfers, href: "/admin/transfers" },
   ];
 

@@ -11,10 +11,13 @@ export default async function NewClubPage() {
     redirect("/admin/login");
   }
 
-  const leagues = await prisma.league.findMany({
-    orderBy: { nameFr: "asc" },
-    include: { country: true },
-  });
+  const [competitions, clubs] = await Promise.all([
+    prisma.competition.findMany({
+      orderBy: { nameFr: "asc" },
+      include: { country: true },
+    }),
+    prisma.club.findMany({ orderBy: { nameFr: "asc" } }),
+  ]);
 
   return (
     <AdminShell title="Ajouter un club">
@@ -24,10 +27,13 @@ export default async function NewClubPage() {
           cancelHref="/admin/clubs"
           submitLabel="Créer le club"
           fields={clubFields(
-            leagues.map((league) => ({
-              value: league.id,
-              label: `${league.nameFr} (${league.country.nameFr})`,
+            competitions.map((competition) => ({
+              value: competition.id,
+              label: competition.country
+                ? `${competition.nameFr} (${competition.country.nameFr})`
+                : competition.nameFr,
             })),
+            clubs.map((club) => ({ value: club.id, label: club.nameFr })),
           )}
         />
       </div>

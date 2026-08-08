@@ -9,7 +9,7 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
   const t = await getTranslations("nav");
 
   const links = [
-    { href: "/leagues", label: t("leagues") },
+    { href: "/competitions", label: t("competitions") },
     { href: "/transfers", label: t("transfers") },
   ] as const;
 

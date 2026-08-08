@@ -3,8 +3,10 @@ import { logout } from "@/app/admin/actions";
 
 const NAV = [
   { href: "/admin", label: "Tableau de bord" },
+  { href: "/admin/competitions", label: "Compétitions" },
   { href: "/admin/clubs", label: "Clubs" },
   { href: "/admin/players", label: "Joueurs" },
+  { href: "/admin/coaches", label: "Entraîneurs" },
   { href: "/admin/transfers", label: "Transferts" },
 ] as const;
 

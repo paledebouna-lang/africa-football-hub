@@ -30,10 +30,13 @@ export default async function TransfersPage({
   const t = await getTranslations();
 
   const [leagues, seasons, transfers] = await Promise.all([
-    prisma.league.findMany({ orderBy: { nameFr: "asc" } }),
+    prisma.competition.findMany({
+      where: { type: "LEAGUE" },
+      orderBy: { nameFr: "asc" },
+    }),
     prisma.season.findMany({ orderBy: { startDate: "desc" } }),
     getFilteredTransfers({
-      leagueSlug: filters.league,
+      competitionSlug: filters.league,
       seasonId: filters.season,
       type: filters.type,
     }),

@@ -14,7 +14,7 @@ export default async function NewPlayerPage() {
   const [clubs, countries] = await Promise.all([
     prisma.club.findMany({
       orderBy: { nameFr: "asc" },
-      include: { league: { include: { country: true } } },
+      include: { primaryCompetition: { include: { country: true } } },
     }),
     prisma.country.findMany({ orderBy: { nameFr: "asc" } }),
   ]);
@@ -29,7 +29,9 @@ export default async function NewPlayerPage() {
           fields={playerFields(
             clubs.map((club) => ({
               value: club.id,
-              label: `${club.nameFr} (${club.league.country.nameFr})`,
+              label: club.primaryCompetition?.country
+                ? `${club.nameFr} (${club.primaryCompetition.country.nameFr})`
+                : club.nameFr,
             })),
             countries.map((country) => ({
               value: country.id,

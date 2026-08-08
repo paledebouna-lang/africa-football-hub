@@ -1,6 +1,8 @@
 {
   "nav": {
     "home": "Accueil",
+    "competitions": "Compétitions",
+    "coaches": "Entraîneurs",
     "leagues": "Championnats",
     "clubs": "Clubs",
     "players": "Joueurs",
@@ -41,7 +43,11 @@
     "founded": "Fondé en",
     "league": "Championnat",
     "totalValue": "Valeur de l'effectif",
-    "noPlayers": "Aucun joueur enregistré pour ce club."
+    "noPlayers": "Aucun joueur enregistré pour ce club.",
+    "academy": "Centre de formation",
+    "academies": "Centres de formation",
+    "parentClub": "Club parent",
+    "competitions": "Compétitions {season}"
   },
   "player": {
     "profile": "Profil",
@@ -62,7 +68,22 @@
     "noTransfers": "Aucun transfert enregistré.",
     "proposeValue": "Proposer une valeur",
     "freeAgent": "Sans club",
-    "years": "{count} ans"
+    "years": "{count} ans",
+    "category": "Catégorie",
+    "nationalTeam": "Sélection nationale",
+    "caps": "Sélections",
+    "goals": "Buts",
+    "level": "Niveau",
+    "currentlySelected": "Sélectionné actuellement",
+    "noSelection": "Aucune sélection nationale enregistrée.",
+    "competitions": "Compétitions disputées",
+    "noCompetitions": "Aucune compétition enregistrée pour cette saison.",
+    "videos": "Vidéos",
+    "noVideos": "Aucune vidéo.",
+    "watchOnYoutube": "Voir sur YouTube",
+    "estimated": "Estimation",
+    "confidence": "Fiabilité de l'estimation : {percent} %",
+    "howComputed": "Comment cette valeur est calculée"
   },
   "transfers": {
     "title": "Transferts",
@@ -115,8 +136,65 @@
     "resultsFor": "Résultats pour « {query} »",
     "players": "Joueurs",
     "clubs": "Clubs",
+    "coaches": "Entraîneurs",
+    "competitions": "Compétitions",
     "noResults": "Aucun résultat.",
-    "typeToSearch": "Saisis un nom de joueur ou de club."
+    "typeToSearch": "Saisis un nom de joueur, de club ou d'entraîneur."
+  },
+  "competition": {
+    "title": "Compétitions",
+    "clubsEngaged": "Clubs engagés",
+    "filterCountry": "Pays",
+    "filterType": "Type",
+    "allCountries": "Tous les pays",
+    "allTypes": "Tous les types",
+    "noClubs": "Aucun club engagé pour cette saison.",
+    "continental": "Compétition continentale",
+    "strength": "Niveau"
+  },
+  "competitionType": {
+    "LEAGUE": "Championnat",
+    "CUP": "Coupe nationale",
+    "SUPER_CUP": "Supercoupe",
+    "CONTINENTAL": "Compétition continentale",
+    "INTERNATIONAL": "Compétition internationale",
+    "YOUTH": "Compétition de jeunes"
+  },
+  "ageCategory": {
+    "SENIOR": "Seniors",
+    "U23": "Moins de 23 ans",
+    "U20": "Moins de 20 ans",
+    "U19": "Moins de 19 ans",
+    "U17": "Moins de 17 ans",
+    "U15": "Moins de 15 ans"
+  },
+  "coach": {
+    "title": "Entraîneurs",
+    "staff": "Encadrement technique",
+    "career": "Parcours",
+    "club": "Club",
+    "role": "Fonction",
+    "from": "Depuis",
+    "until": "Jusqu'à",
+    "current": "En poste",
+    "licence": "Licence",
+    "noSpells": "Aucun passage enregistré.",
+    "noStaff": "Aucun encadrement renseigné."
+  },
+  "coachRole": {
+    "HEAD_COACH": "Entraîneur principal",
+    "ASSISTANT": "Entraîneur adjoint",
+    "GOALKEEPING": "Entraîneur des gardiens",
+    "FITNESS": "Préparateur physique",
+    "ANALYST": "Analyste vidéo",
+    "ACADEMY_DIRECTOR": "Directeur du centre de formation",
+    "SCOUT": "Recruteur"
+  },
+  "videoType": {
+    "HIGHLIGHTS": "Résumé",
+    "MATCH": "Match complet",
+    "INTERVIEW": "Interview",
+    "SKILLS": "Gestes techniques"
   },
   "footer": {
     "about": "À propos",

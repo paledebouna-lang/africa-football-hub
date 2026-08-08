@@ -16,12 +16,13 @@ export default async function EditClubPage({
   }
 
   const { id } = await params;
-  const [club, leagues] = await Promise.all([
+  const [club, competitions, clubs] = await Promise.all([
     prisma.club.findUnique({ where: { id } }),
-    prisma.league.findMany({
+    prisma.competition.findMany({
       orderBy: { nameFr: "asc" },
       include: { country: true },
     }),
+    prisma.club.findMany({ orderBy: { nameFr: "asc" } }),
   ]);
 
   if (!club) notFound();
@@ -35,10 +36,13 @@ export default async function EditClubPage({
           cancelHref="/admin/clubs"
           submitLabel="Enregistrer"
           fields={clubFields(
-            leagues.map((league) => ({
-              value: league.id,
-              label: `${league.nameFr} (${league.country.nameFr})`,
+            competitions.map((competition) => ({
+              value: competition.id,
+              label: competition.country
+                ? `${competition.nameFr} (${competition.country.nameFr})`
+                : competition.nameFr,
             })),
+            clubs.map((item) => ({ value: item.id, label: item.nameFr })),
             club,
           )}
         />

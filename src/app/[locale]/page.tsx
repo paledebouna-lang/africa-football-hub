@@ -5,7 +5,7 @@ import { site } from "@/lib/site";
 import { formatEur, formatDate } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
 import {
-  getLeaguesWithCounts,
+  getCompetitions,
   getLatestTransfers,
   getTopValuedPlayers,
 } from "@/lib/queries";
@@ -19,11 +19,17 @@ export default async function HomePage({
   setRequestLocale(locale);
   const t = await getTranslations();
 
-  const [leagues, transfers, topPlayers] = await Promise.all([
-    getLeaguesWithCounts(),
+  const [allCompetitions, transfers, topPlayers] = await Promise.all([
+    getCompetitions(),
     getLatestTransfers(8),
     getTopValuedPlayers(8),
   ]);
+
+  // The home page showcases the domestic leagues; cups and continental
+  // competitions are one click away on /competitions.
+  const leagues = allCompetitions.filter(
+    (competition) => competition.type === "LEAGUE",
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 space-y-10">
@@ -33,7 +39,7 @@ export default async function HomePage({
         </h1>
         <p className="mt-3 max-w-2xl text-white/90">{t("home.heroSubtitle")}</p>
         <Link
-          href="/leagues"
+          href="/competitions"
           className="mt-6 inline-block rounded-md bg-white px-4 py-2 text-sm font-medium text-brand-strong hover:bg-white/90 transition-colors"
         >
           {t("home.browseLeagues")}
@@ -43,7 +49,7 @@ export default async function HomePage({
       <section>
         <div className="flex items-baseline justify-between">
           <h2 className="text-xl font-semibold">{t("home.leagues")}</h2>
-          <Link href="/leagues" className="text-sm text-brand hover:underline">
+          <Link href="/competitions" className="text-sm text-brand hover:underline">
             {t("home.viewAll")}
           </Link>
         </div>
@@ -51,15 +57,17 @@ export default async function HomePage({
           {leagues.map((league) => (
             <li key={league.id}>
               <Link
-                href={`/leagues/${league.slug}`}
+                href={`/competitions/${league.slug}`}
                 className="block rounded-lg border border-border bg-surface p-4 hover:border-brand transition-colors"
               >
                 <p className="text-sm text-muted">
-                  {localizedName(league.country, locale)}
+                  {league.country
+                    ? localizedName(league.country, locale)
+                    : t("competition.continental")}
                 </p>
                 <p className="font-medium">{localizedName(league, locale)}</p>
                 <p className="mt-1 text-sm text-muted">
-                  {t("league.clubCount", { count: league._count.clubs })}
+                  {t("league.clubCount", { count: league._count.primaryClubs })}
                 </p>
               </Link>
             </li>

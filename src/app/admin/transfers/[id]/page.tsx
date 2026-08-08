@@ -21,7 +21,7 @@ export default async function EditTransferPage({
     prisma.player.findMany({ orderBy: { name: "asc" }, include: { club: true } }),
     prisma.club.findMany({
       orderBy: { nameFr: "asc" },
-      include: { league: { include: { country: true } } },
+      include: { primaryCompetition: { include: { country: true } } },
     }),
     prisma.season.findMany({ orderBy: { startDate: "desc" } }),
   ]);
@@ -45,7 +45,9 @@ export default async function EditTransferPage({
             })),
             clubs.map((club) => ({
               value: club.id,
-              label: `${club.nameFr} (${club.league.country.nameFr})`,
+              label: club.primaryCompetition?.country
+                ? `${club.nameFr} (${club.primaryCompetition.country.nameFr})`
+                : club.nameFr,
             })),
             seasons.map((season) => ({
               value: season.id,

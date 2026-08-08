@@ -14,40 +14,80 @@ export function currentValueOf(player: {
   return player.marketValues[0]?.valueEur ?? null;
 }
 
-export async function getLeaguesWithCounts() {
-  return prisma.league.findMany({
+export function squadValue(players: { marketValues: { valueEur: number }[] }[]): number {
+  return players.reduce((total, player) => total + (currentValueOf(player) ?? 0), 0);
+}
+
+export async function getCurrentSeason() {
+  return prisma.season.findFirst({ where: { isCurrent: true } });
+}
+
+// ---------------------------------------------------------------- competitions
+
+export type CompetitionFilters = {
+  countrySlug?: string;
+  type?: string;
+};
+
+export async function getCompetitions(filters: CompetitionFilters = {}) {
+  return prisma.competition.findMany({
+    where: {
+      ...(filters.countrySlug ? { country: { slug: filters.countrySlug } } : {}),
+      ...(filters.type ? { type: filters.type as never } : {}),
+    },
     include: {
       country: true,
-      _count: { select: { clubs: true } },
+      _count: { select: { primaryClubs: true } },
     },
-    orderBy: [{ country: { nameFr: "asc" } }],
+    orderBy: [{ type: "asc" }, { nameFr: "asc" }],
   });
 }
 
-export async function getLeagueBySlug(slug: string) {
-  return prisma.league.findUnique({
+export async function getCompetitionBySlug(slug: string) {
+  const season = await getCurrentSeason();
+
+  return prisma.competition.findUnique({
     where: { slug },
     include: {
       country: true,
-      clubs: {
-        orderBy: { nameFr: "asc" },
+      entries: {
+        where: season ? { seasonId: season.id } : undefined,
         include: {
-          players: { include: withLatestValue },
-          _count: { select: { players: true } },
+          club: {
+            include: {
+              players: { include: withLatestValue },
+              _count: { select: { players: true } },
+            },
+          },
         },
       },
     },
   });
 }
 
+// ---------------------------------------------------------------- clubs
+
 export async function getClubBySlug(slug: string) {
+  const season = await getCurrentSeason();
+
   return prisma.club.findUnique({
     where: { slug },
     include: {
-      league: { include: { country: true } },
+      primaryCompetition: { include: { country: true } },
+      parentClub: true,
+      academies: true,
+      entries: {
+        where: season ? { seasonId: season.id } : undefined,
+        include: { competition: { include: { country: true } } },
+      },
       players: {
-        orderBy: [{ position: "asc" }, { name: "asc" }],
+        orderBy: [{ ageCategory: "asc" }, { position: "asc" }, { name: "asc" }],
         include: { ...withLatestValue, nationality: true },
+      },
+      coachSpells: {
+        where: { endDate: null },
+        include: { coach: { include: { nationality: true } } },
+        orderBy: { role: "asc" },
       },
       transfersIn: {
         orderBy: { date: "desc" },
@@ -63,12 +103,26 @@ export async function getClubBySlug(slug: string) {
   });
 }
 
+// ---------------------------------------------------------------- players
+
 export async function getPlayerBySlug(slug: string) {
+  const season = await getCurrentSeason();
+
   return prisma.player.findUnique({
     where: { slug },
     include: {
-      club: { include: { league: { include: { country: true } } } },
+      club: {
+        include: {
+          primaryCompetition: { include: { country: true } },
+          entries: {
+            where: season ? { seasonId: season.id } : undefined,
+            include: { competition: { include: { country: true } } },
+          },
+        },
+      },
       nationality: true,
+      selections: { include: { country: true }, orderBy: { level: "asc" } },
+      videos: { orderBy: { createdAt: "desc" } },
       marketValues: { orderBy: { effectiveAt: "asc" } },
       transfers: {
         orderBy: { date: "desc" },
@@ -78,18 +132,60 @@ export async function getPlayerBySlug(slug: string) {
   });
 }
 
+// ---------------------------------------------------------------- coaches
+
+export async function getCoachBySlug(slug: string) {
+  return prisma.coach.findUnique({
+    where: { slug },
+    include: {
+      nationality: true,
+      spells: {
+        orderBy: { startDate: "desc" },
+        include: {
+          club: { include: { primaryCompetition: { include: { country: true } } } },
+        },
+      },
+    },
+  });
+}
+
+// ---------------------------------------------------------------- transfers
+
 export async function getLatestTransfers(limit = 10) {
   return prisma.transfer.findMany({
     orderBy: { date: "desc" },
     take: limit,
-    include: {
-      player: true,
-      fromClub: true,
-      toClub: true,
-      season: true,
-    },
+    include: { player: true, fromClub: true, toClub: true, season: true },
   });
 }
+
+export type TransferFilters = {
+  competitionSlug?: string;
+  seasonId?: string;
+  type?: string;
+};
+
+export async function getFilteredTransfers(filters: TransferFilters, limit = 100) {
+  return prisma.transfer.findMany({
+    where: {
+      ...(filters.seasonId ? { seasonId: filters.seasonId } : {}),
+      ...(filters.type ? { type: filters.type as never } : {}),
+      ...(filters.competitionSlug
+        ? {
+            OR: [
+              { toClub: { primaryCompetition: { slug: filters.competitionSlug } } },
+              { fromClub: { primaryCompetition: { slug: filters.competitionSlug } } },
+            ],
+          }
+        : {}),
+    },
+    orderBy: { date: "desc" },
+    take: limit,
+    include: { player: true, fromClub: true, toClub: true, season: true },
+  });
+}
+
+// ---------------------------------------------------------------- discovery
 
 export async function getTopValuedPlayers(limit = 10) {
   const players = await prisma.player.findMany({
@@ -103,39 +199,8 @@ export async function getTopValuedPlayers(limit = 10) {
     .slice(0, limit);
 }
 
-export type TransferFilters = {
-  leagueSlug?: string;
-  seasonId?: string;
-  type?: string;
-};
-
-export async function getFilteredTransfers(filters: TransferFilters, limit = 100) {
-  return prisma.transfer.findMany({
-    where: {
-      ...(filters.seasonId ? { seasonId: filters.seasonId } : {}),
-      ...(filters.type ? { type: filters.type as never } : {}),
-      ...(filters.leagueSlug
-        ? {
-            OR: [
-              { toClub: { league: { slug: filters.leagueSlug } } },
-              { fromClub: { league: { slug: filters.leagueSlug } } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { date: "desc" },
-    take: limit,
-    include: {
-      player: true,
-      fromClub: true,
-      toClub: true,
-      season: true,
-    },
-  });
-}
-
-export async function searchPlayersAndClubs(query: string) {
-  const [players, clubs] = await Promise.all([
+export async function searchAll(query: string) {
+  const [players, clubs, coaches, competitions] = await Promise.all([
     prisma.player.findMany({
       where: {
         OR: [
@@ -157,14 +222,36 @@ export async function searchPlayersAndClubs(query: string) {
         ],
       },
       take: 25,
-      include: { league: { include: { country: true } } },
+      include: { primaryCompetition: { include: { country: true } } },
+      orderBy: { nameFr: "asc" },
+    }),
+    prisma.coach.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { nameAr: { contains: query } },
+        ],
+      },
+      take: 15,
+      include: {
+        nationality: true,
+        spells: { where: { endDate: null }, include: { club: true }, take: 1 },
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.competition.findMany({
+      where: {
+        OR: [
+          { nameFr: { contains: query, mode: "insensitive" } },
+          { nameEn: { contains: query, mode: "insensitive" } },
+          { nameAr: { contains: query } },
+        ],
+      },
+      take: 15,
+      include: { country: true },
       orderBy: { nameFr: "asc" },
     }),
   ]);
 
-  return { players, clubs };
-}
-
-export function squadValue(players: { marketValues: { valueEur: number }[] }[]): number {
-  return players.reduce((total, player) => total + (currentValueOf(player) ?? 0), 0);
+  return { players, clubs, coaches, competitions };
 }

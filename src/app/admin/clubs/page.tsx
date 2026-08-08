@@ -12,16 +12,17 @@ export default async function AdminClubsPage() {
   }
 
   const clubs = await prisma.club.findMany({
-    orderBy: [{ league: { nameFr: "asc" } }, { nameFr: "asc" }],
+    orderBy: [{ type: "asc" }, { nameFr: "asc" }],
     include: {
-      league: { include: { country: true } },
+      primaryCompetition: { include: { country: true } },
+      parentClub: true,
       _count: { select: { players: true } },
     },
   });
 
   return (
     <AdminShell
-      title="Clubs"
+      title="Clubs et centres de formation"
       action={
         <Link
           href="/admin/clubs/new"
@@ -38,6 +39,7 @@ export default async function AdminClubsPage() {
               <th className="px-4 py-3 text-left font-medium">Club</th>
               <th className="px-4 py-3 text-left font-medium">Championnat</th>
               <th className="px-4 py-3 text-left font-medium">Ville</th>
+              <th className="px-4 py-3 text-center font-medium">Cat. FIFA</th>
               <th className="px-4 py-3 text-right font-medium">Joueurs</th>
               <th className="px-4 py-3 text-right font-medium">Actions</th>
             </tr>
@@ -45,12 +47,37 @@ export default async function AdminClubsPage() {
           <tbody className="divide-y divide-border">
             {clubs.map((club) => (
               <tr key={club.id}>
-                <td className="px-4 py-3 font-medium">{club.nameFr}</td>
+                <td className="px-4 py-3">
+                  <span className="font-medium">{club.nameFr}</span>
+                  {club.type === "ACADEMY" && (
+                    <span className="ms-2 rounded bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
+                      Formation
+                    </span>
+                  )}
+                  {club.parentClub && (
+                    <span className="block text-xs text-muted">
+                      Rattaché à {club.parentClub.nameFr}
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-muted">
-                  {club.league.nameFr}
-                  <span className="block text-xs">{club.league.country.nameFr}</span>
+                  {club.primaryCompetition ? (
+                    <>
+                      {club.primaryCompetition.nameFr}
+                      {club.primaryCompetition.country && (
+                        <span className="block text-xs">
+                          {club.primaryCompetition.country.nameFr}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="px-4 py-3 text-muted">{club.city ?? "—"}</td>
+                <td className="px-4 py-3 text-center tabular-nums text-muted">
+                  {club.fifaCategory ?? "—"}
+                </td>
                 <td className="px-4 py-3 text-right tabular-nums">
                   {club._count.players}
                 </td>

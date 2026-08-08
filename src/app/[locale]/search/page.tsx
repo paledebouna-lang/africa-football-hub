@@ -3,7 +3,7 @@ import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { formatEur } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
-import { searchPlayersAndClubs, currentValueOf } from "@/lib/queries";
+import { searchAll, currentValueOf } from "@/lib/queries";
 
 export default async function SearchPage({
   params,
@@ -28,8 +28,12 @@ export default async function SearchPage({
     );
   }
 
-  const { players, clubs } = await searchPlayersAndClubs(query);
-  const hasResults = players.length > 0 || clubs.length > 0;
+  const { players, clubs, coaches, competitions } = await searchAll(query);
+  const hasResults =
+    players.length > 0 ||
+    clubs.length > 0 ||
+    coaches.length > 0 ||
+    competitions.length > 0;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
@@ -38,57 +42,112 @@ export default async function SearchPage({
       {!hasResults && <p className="text-sm text-muted">{t("search.noResults")}</p>}
 
       {players.length > 0 && (
-        <section>
-          <h2 className="text-xl font-semibold">{t("search.players")}</h2>
-          <ul className="mt-4 divide-y divide-border rounded-lg border border-border bg-surface">
-            {players.map((player) => (
-              <li
-                key={player.id}
-                className="flex items-center justify-between gap-3 p-3 text-sm"
-              >
-                <span className="min-w-0">
-                  <Link
-                    href={`/players/${player.slug}`}
-                    className="font-medium hover:text-brand"
-                  >
-                    {playerName(player, locale)}
-                  </Link>
-                  {player.club && (
-                    <span className="block text-muted">
-                      {localizedName(player.club, locale)}
-                    </span>
-                  )}
-                </span>
-                <span className="shrink-0 font-medium text-brand">
-                  {formatEur(currentValueOf(player), locale)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <ResultSection title={t("search.players")}>
+          {players.map((player) => (
+            <li
+              key={player.id}
+              className="flex items-center justify-between gap-3 p-3 text-sm"
+            >
+              <span className="min-w-0">
+                <Link
+                  href={`/players/${player.slug}`}
+                  className="font-medium hover:text-brand"
+                >
+                  {playerName(player, locale)}
+                </Link>
+                {player.club && (
+                  <span className="block text-muted">
+                    {localizedName(player.club, locale)}
+                  </span>
+                )}
+              </span>
+              <span className="shrink-0 font-medium text-brand">
+                {formatEur(currentValueOf(player), locale)}
+              </span>
+            </li>
+          ))}
+        </ResultSection>
       )}
 
       {clubs.length > 0 && (
-        <section>
-          <h2 className="text-xl font-semibold">{t("search.clubs")}</h2>
-          <ul className="mt-4 divide-y divide-border rounded-lg border border-border bg-surface">
-            {clubs.map((club) => (
-              <li key={club.id} className="p-3 text-sm">
-                <Link
-                  href={`/clubs/${club.slug}`}
-                  className="font-medium hover:text-brand"
-                >
-                  {localizedName(club, locale)}
-                </Link>
-                <span className="block text-muted">
-                  {localizedName(club.league, locale)} ·{" "}
-                  {localizedName(club.league.country, locale)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <ResultSection title={t("search.clubs")}>
+          {clubs.map((club) => (
+            <li key={club.id} className="p-3 text-sm">
+              <Link
+                href={`/clubs/${club.slug}`}
+                className="font-medium hover:text-brand"
+              >
+                {localizedName(club, locale)}
+              </Link>
+              <span className="block text-muted">
+                {club.type === "ACADEMY" && `${t("club.academy")} · `}
+                {club.primaryCompetition
+                  ? localizedName(club.primaryCompetition, locale)
+                  : "—"}
+              </span>
+            </li>
+          ))}
+        </ResultSection>
+      )}
+
+      {coaches.length > 0 && (
+        <ResultSection title={t("search.coaches")}>
+          {coaches.map((coach) => (
+            <li key={coach.id} className="p-3 text-sm">
+              <Link
+                href={`/coaches/${coach.slug}`}
+                className="font-medium hover:text-brand"
+              >
+                {locale === "ar" && coach.nameAr ? coach.nameAr : coach.name}
+              </Link>
+              <span className="block text-muted">
+                {coach.spells[0]
+                  ? localizedName(coach.spells[0].club, locale)
+                  : coach.nationality
+                    ? localizedName(coach.nationality, locale)
+                    : "—"}
+              </span>
+            </li>
+          ))}
+        </ResultSection>
+      )}
+
+      {competitions.length > 0 && (
+        <ResultSection title={t("search.competitions")}>
+          {competitions.map((competition) => (
+            <li key={competition.id} className="p-3 text-sm">
+              <Link
+                href={`/competitions/${competition.slug}`}
+                className="font-medium hover:text-brand"
+              >
+                {localizedName(competition, locale)}
+              </Link>
+              <span className="block text-muted">
+                {t(`competitionType.${competition.type}`)}
+                {competition.country &&
+                  ` · ${localizedName(competition.country, locale)}`}
+              </span>
+            </li>
+          ))}
+        </ResultSection>
       )}
     </div>
+  );
+}
+
+function ResultSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h2 className="text-xl font-semibold">{title}</h2>
+      <ul className="mt-4 divide-y divide-border rounded-lg border border-border bg-surface">
+        {children}
+      </ul>
+    </section>
   );
 }

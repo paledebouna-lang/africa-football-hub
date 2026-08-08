@@ -1,6 +1,8 @@
 {
   "nav": {
     "home": "الرئيسية",
+    "competitions": "المسابقات",
+    "coaches": "المدربون",
     "leagues": "الدوريات",
     "clubs": "الأندية",
     "players": "اللاعبون",
@@ -41,7 +43,11 @@
     "founded": "سنة التأسيس",
     "league": "الدوري",
     "totalValue": "قيمة التشكيلة",
-    "noPlayers": "لا يوجد لاعبون مسجلون لهذا النادي."
+    "noPlayers": "لا يوجد لاعبون مسجلون لهذا النادي.",
+    "academy": "أكاديمية",
+    "academies": "الأكاديميات",
+    "parentClub": "النادي الأم",
+    "competitions": "مسابقات {season}"
   },
   "player": {
     "profile": "الملف الشخصي",
@@ -62,7 +68,22 @@
     "noTransfers": "لا توجد انتقالات مسجلة.",
     "proposeValue": "اقترح قيمة",
     "freeAgent": "لاعب حر",
-    "years": "{count} سنة"
+    "years": "{count} سنة",
+    "category": "الفئة",
+    "nationalTeam": "المنتخب الوطني",
+    "caps": "المباريات الدولية",
+    "goals": "الأهداف",
+    "level": "المستوى",
+    "currentlySelected": "مستدعى حاليًا",
+    "noSelection": "لا توجد مشاركات دولية مسجلة.",
+    "competitions": "المسابقات المشارك فيها",
+    "noCompetitions": "لا توجد مسابقة مسجلة لهذا الموسم.",
+    "videos": "مقاطع الفيديو",
+    "noVideos": "لا توجد مقاطع فيديو.",
+    "watchOnYoutube": "المشاهدة على يوتيوب",
+    "estimated": "تقدير",
+    "confidence": "درجة موثوقية التقدير: {percent}٪",
+    "howComputed": "كيف تُحتسب هذه القيمة"
   },
   "transfers": {
     "title": "الانتقالات",
@@ -115,8 +136,65 @@
     "resultsFor": "نتائج البحث عن «{query}»",
     "players": "اللاعبون",
     "clubs": "الأندية",
+    "coaches": "المدربون",
+    "competitions": "المسابقات",
     "noResults": "لا توجد نتائج.",
-    "typeToSearch": "أدخل اسم لاعب أو نادٍ."
+    "typeToSearch": "أدخل اسم لاعب أو نادٍ أو مدرب."
+  },
+  "competition": {
+    "title": "المسابقات",
+    "clubsEngaged": "الأندية المشاركة",
+    "filterCountry": "البلد",
+    "filterType": "النوع",
+    "allCountries": "جميع البلدان",
+    "allTypes": "جميع الأنواع",
+    "noClubs": "لا توجد أندية مشاركة في هذا الموسم.",
+    "continental": "مسابقة قارية",
+    "strength": "المستوى"
+  },
+  "competitionType": {
+    "LEAGUE": "دوري",
+    "CUP": "كأس محلية",
+    "SUPER_CUP": "كأس السوبر",
+    "CONTINENTAL": "مسابقة قارية",
+    "INTERNATIONAL": "مسابقة دولية",
+    "YOUTH": "مسابقة للفئات السنية"
+  },
+  "ageCategory": {
+    "SENIOR": "الفئة الأولى",
+    "U23": "تحت 23 سنة",
+    "U20": "تحت 20 سنة",
+    "U19": "تحت 19 سنة",
+    "U17": "تحت 17 سنة",
+    "U15": "تحت 15 سنة"
+  },
+  "coach": {
+    "title": "المدربون",
+    "staff": "الجهاز الفني",
+    "career": "المسيرة",
+    "club": "النادي",
+    "role": "المهمة",
+    "from": "من",
+    "until": "إلى",
+    "current": "في منصبه",
+    "licence": "الرخصة",
+    "noSpells": "لا توجد فترات تدريب مسجلة.",
+    "noStaff": "لا يوجد جهاز فني مسجل."
+  },
+  "coachRole": {
+    "HEAD_COACH": "المدرب الأول",
+    "ASSISTANT": "المدرب المساعد",
+    "GOALKEEPING": "مدرب الحراس",
+    "FITNESS": "معد بدني",
+    "ANALYST": "محلل فيديو",
+    "ACADEMY_DIRECTOR": "مدير الأكاديمية",
+    "SCOUT": "كشاف"
+  },
+  "videoType": {
+    "HIGHLIGHTS": "ملخص",
+    "MATCH": "مباراة كاملة",
+    "INTERVIEW": "مقابلة",
+    "SKILLS": "مهارات"
   },
   "footer": {
     "about": "من نحن",
