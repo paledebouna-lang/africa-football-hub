@@ -146,6 +146,33 @@
     "ACADEMY": "Academy",
     "AGENCY": "Agency"
   },
+  "memberRole": {
+    "OWNER": "Owner",
+    "MANAGER": "Manager",
+    "AGENT": "Agent",
+    "SCOUT": "Scout"
+  },
+  "org": {
+    "manage": "Manage my players",
+    "myPlayers": "My players",
+    "playerCount": "Registered players",
+    "addPlayer": "Add a player",
+    "noPlayers": "No players registered.",
+    "noPlayersHint": "Add your players: they appear on the public site straight away, with an automatically computed value.",
+    "viewPublicProfile": "View public profile",
+    "fieldName": "Full name",
+    "fieldNameAr": "Name in Arabic",
+    "fieldPhoto": "Photo address",
+    "fieldPhotoHint": "Direct link to an image. File upload is coming soon.",
+    "squadLevelHint": "This field sets the player's starting value.",
+    "valuationNote": "The market value is computed automatically from your league's level, the player's place in the squad, their age and their contract situation.",
+    "none": "Not set",
+    "save": "Save",
+    "videoUrl": "Video link",
+    "videoUrlHint": "Paste the YouTube address from your browser's address bar.",
+    "videoTitle": "Video title",
+    "addVideo": "Add video"
+  },
   "organisationStatus": {
     "PENDING": "Pending",
     "APPROVED": "Approved",

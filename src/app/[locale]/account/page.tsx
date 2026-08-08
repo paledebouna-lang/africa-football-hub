@@ -85,6 +85,14 @@ export default async function AccountPage({
                       </Badge>
                     </div>
 
+                    {organisation.status === "APPROVED" && (
+                      <Link
+                        href={`/account/org/${organisation.slug}`}
+                        className="mt-3 inline-block rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
+                      >
+                        {t("org.manage")}
+                      </Link>
+                    )}
                     {organisation.status === "PENDING" && (
                       <p className="mt-3 rounded-md bg-accent/10 p-3 text-sm text-muted">
                         {t("account.pendingExplain")}

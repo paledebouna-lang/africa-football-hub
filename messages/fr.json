@@ -146,6 +146,33 @@
     "ACADEMY": "Centre de formation",
     "AGENCY": "Agence"
   },
+  "memberRole": {
+    "OWNER": "Responsable",
+    "MANAGER": "Gestionnaire",
+    "AGENT": "Agent",
+    "SCOUT": "Recruteur"
+  },
+  "org": {
+    "manage": "Gérer mes joueurs",
+    "myPlayers": "Mes joueurs",
+    "playerCount": "Joueurs enregistrés",
+    "addPlayer": "Ajouter un joueur",
+    "noPlayers": "Aucun joueur enregistré.",
+    "noPlayersHint": "Ajoute tes joueurs : ils apparaîtront aussitôt sur le site public, avec leur valeur calculée automatiquement.",
+    "viewPublicProfile": "Voir la fiche publique",
+    "fieldName": "Nom complet",
+    "fieldNameAr": "Nom en arabe",
+    "fieldPhoto": "Adresse de la photo",
+    "fieldPhotoHint": "Lien direct vers une image. L'envoi de fichiers arrive bientôt.",
+    "squadLevelHint": "C'est ce champ qui fixe la valeur de départ du joueur.",
+    "valuationNote": "La valeur marchande est calculée automatiquement à partir du niveau de ton championnat, de la place du joueur dans l'effectif, de son âge et de sa situation contractuelle.",
+    "none": "Non renseigné",
+    "save": "Enregistrer",
+    "videoUrl": "Lien de la vidéo",
+    "videoUrlHint": "Colle l'adresse YouTube depuis la barre du navigateur.",
+    "videoTitle": "Titre de la vidéo",
+    "addVideo": "Ajouter la vidéo"
+  },
   "organisationStatus": {
     "PENDING": "En attente",
     "APPROVED": "Validée",
