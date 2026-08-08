@@ -96,6 +96,29 @@ enum ValuationSource {
   ALGORITHM
 }
 
+enum OrganisationType {
+  CLUB
+  ACADEMY
+  AGENCY
+}
+
+/// An organisation registers freely but publishes nothing until an administrator
+/// has checked that it really is who it claims to be. Credibility of the data is
+/// the platform's main asset, so this gate is deliberate.
+enum OrganisationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum MemberRole {
+  OWNER
+  MANAGER
+  AGENT
+  SCOUT
+}
+
 enum HonourType {
   WINNER
   RUNNER_UP
@@ -194,10 +217,11 @@ model Club {
   parentClub         Club?        @relation("ClubAcademies", fields: [parentClubId], references: [id], onDelete: SetNull)
   academies          Club[]       @relation("ClubAcademies")
 
-  players     Player[]
-  coachSpells CoachSpell[]
-  entries     ClubCompetition[]
-  honours     Honour[]
+  players       Player[]
+  coachSpells   CoachSpell[]
+  entries       ClubCompetition[]
+  honours       Honour[]
+  organisations Organisation[]
 
   transfersIn  Transfer[] @relation("TransferToClub")
   transfersOut Transfer[] @relation("TransferFromClub")
@@ -252,9 +276,15 @@ model Player {
   transfers      Transfer[]
   marketValues   MarketValue[]
   valueProposals ValueProposal[]
-  videos         PlayerVideo[]
-  selections     NationalTeamSelection[]
-  honours        Honour[]
+  videos          PlayerVideo[]
+  selections      NationalTeamSelection[]
+  honours         Honour[]
+  representations PlayerRepresentation[]
+
+  /// Which organisation entered this player, kept for accountability once clubs
+  /// and agencies start filling the database themselves.
+  createdByOrganisationId String?
+  createdByOrganisation   Organisation? @relation("PlayerCreatedByOrganisation", fields: [createdByOrganisationId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -463,12 +493,97 @@ model UserProfile {
   email    String  @unique
   role     Role    @default(USER)
   isBanned Boolean @default(false)
+  fullName String?
+  phone    String?
 
   proposals         ValueProposal[]
   reviewedProposals ValueProposal[] @relation("ProposalReviewer")
 
+  memberships          OrganisationMember[]
+  createdOrganisations Organisation[]       @relation("OrganisationCreator")
+  reviewedOrganisations Organisation[]      @relation("OrganisationReviewer")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// A club, academy or agents' agency holding an account on the platform.
+/// A CLUB or ACADEMY organisation points at the Club record it speaks for;
+/// an AGENCY has none, and instead represents players through PlayerRepresentation.
+model Organisation {
+  id       String             @id @default(cuid())
+  slug     String             @unique
+  name     String
+  type     OrganisationType   @default(CLUB)
+  status   OrganisationStatus @default(PENDING)
+  clubId   String?
+
+  country     String?
+  city        String?
+  email       String
+  phone       String?
+  websiteUrl  String?
+  logoUrl     String?
+  /// Federation affiliation or FIFA agent licence, whichever applies.
+  registration String?
+  /// What the applicant wrote to justify the claim, shown to the reviewer.
+  claimNote   String?
+
+  createdById  String
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNote   String?
+
+  club       Club?        @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  createdBy  UserProfile  @relation("OrganisationCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  reviewedBy UserProfile? @relation("OrganisationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  members         OrganisationMember[]
+  representations PlayerRepresentation[]
+  createdPlayers  Player[]               @relation("PlayerCreatedByOrganisation")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([clubId])
+  @@index([type])
+}
+
+model OrganisationMember {
+  id             String     @id @default(cuid())
+  organisationId String
+  userId         String
+  role           MemberRole @default(MANAGER)
+  isActive       Boolean    @default(true)
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user         UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organisationId, userId])
+  @@index([userId])
+}
+
+/// Which agency represents a player, and since when. Ended representations are
+/// kept so a player's history of agents stays visible.
+model PlayerRepresentation {
+  id             String    @id @default(cuid())
+  playerId       String
+  organisationId String
+  startDate      DateTime  @default(now())
+  endDate        DateTime?
+
+  player       Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([playerId, endDate])
+  @@index([organisationId])
 }
 
 model ValueProposal {

@@ -33,9 +33,15 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-4">
+            <Link
+              href="/account"
+              className="text-sm font-medium text-white/90 transition-colors hover:text-white"
+            >
+              {t("myAccount")}
+            </Link>
             <a
               href="/admin"
-              className="text-sm text-white/80 transition-colors hover:text-white"
+              className="text-sm text-white/70 transition-colors hover:text-white"
             >
               {t("admin")}
             </a>

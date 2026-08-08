@@ -372,6 +372,33 @@ export async function deleteTransfer(formData: FormData): Promise<void> {
   revalidatePublicSite();
 }
 
+// ---------------------------------------------------------------- organisations
+
+/**
+ * Approving an organisation is the moment the platform vouches for it, so the
+ * decision is recorded with its reviewer and reason rather than silently applied.
+ */
+export async function reviewOrganisation(formData: FormData): Promise<void> {
+  await requireAdmin();
+
+  const id = String(formData.get("id"));
+  const decision = String(formData.get("decision"));
+
+  if (!["APPROVED", "REJECTED", "SUSPENDED", "PENDING"].includes(decision)) return;
+
+  await prisma.organisation.update({
+    where: { id },
+    data: {
+      status: decision as never,
+      reviewedAt: new Date(),
+      reviewNote: optionalText(formData.get("reviewNote")),
+    },
+  });
+
+  revalidatePath("/admin/organisations");
+  revalidatePublicSite();
+}
+
 // ---------------------------------------------------------------- countries
 
 const countrySchema = z.object({

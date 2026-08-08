@@ -9,6 +9,7 @@ const NAV = [
   { href: "/admin/coaches", label: "Entraîneurs" },
   { href: "/admin/transfers", label: "Transferts" },
   { href: "/admin/countries", label: "Sélections" },
+  { href: "/admin/organisations", label: "Comptes" },
 ] as const;
 
 export function AdminShell({
