@@ -80,8 +80,76 @@ export type ValuationInput = {
   competitionStrength: number | null;
   /** Highest national-team involvement, if any is on record. */
   nationalTeam: { level: string; caps: number } | null;
+  position: string | null;
+  /** Season totals, once match sheets exist for this player. */
+  performance: {
+    minutesPlayed: number;
+    goals: number;
+    assists: number;
+    clubMatches: number;
+  } | null;
   now?: Date;
 };
+
+/**
+ * Goals and assists per 90 that mark an excellent season, by position. Judging a
+ * centre-back against a striker's output would be meaningless, so each role is
+ * measured against its own bar.
+ */
+const CONTRIBUTION_BENCHMARK: Record<string, number> = {
+  ST: 0.7,
+  LW: 0.55,
+  RW: 0.55,
+  AM: 0.5,
+  CM: 0.3,
+  DM: 0.15,
+  LB: 0.2,
+  RB: 0.2,
+  CB: 0.12,
+  GK: 0.05,
+};
+
+/** Minutes needed before a per-90 rate is trusted at face value: ten full matches. */
+const RELIABLE_SAMPLE_MINUTES = 900;
+
+/**
+ * Weighs what a player produced on the pitch against how much of the season they
+ * were on it.
+ *
+ * Production is measured against the benchmark for their own position, so 1.0
+ * means "a typical good season for this role". Small samples are pulled back
+ * towards that average: a striker with two goals in 90 minutes has a spectacular
+ * rate and no evidence, and should not outrank a season-long performer.
+ *
+ * The scale deliberately does not saturate early — a solid starter lands around
+ * +0.7 so that a genuinely exceptional season still has room to stand out, which
+ * is the whole point of a platform meant to reveal players.
+ */
+function performanceScore(
+  performance: NonNullable<ValuationInput["performance"]>,
+  position: string | null,
+): number {
+  const availableMinutes = performance.clubMatches * 90;
+
+  const minutesShare =
+    availableMinutes > 0
+      ? Math.min(1, performance.minutesPlayed / availableMinutes)
+      : 0;
+
+  const benchmark = CONTRIBUTION_BENCHMARK[position ?? ""] ?? 0.3;
+  const per90 =
+    performance.minutesPlayed > 0
+      ? ((performance.goals + performance.assists) * 90) / performance.minutesPlayed
+      : 0;
+
+  const rawProduction = Math.min(1.5, per90 / benchmark);
+  const trust = Math.min(1, performance.minutesPlayed / RELIABLE_SAMPLE_MINUTES);
+  const production = 1 + (rawProduction - 1) * trust;
+
+  // Neutral sits at 0.55: a regular starter with average output for their role.
+  const combined = 0.4 * minutesShare + 0.6 * production;
+  return Math.max(-1, Math.min(1, (combined - 0.55) / 0.55));
+}
 
 export type ValuationResult = {
   valueUsd: number;
@@ -169,8 +237,18 @@ export function computeValuation(input: ValuationInput): ValuationResult {
     });
   }
 
-  // `performance` and `community` are intentionally absent until match sheets and
-  // user accounts exist. Their weight is redistributed, not counted as zero.
+  if (input.performance && input.performance.clubMatches > 0) {
+    const { minutesPlayed, goals, assists } = input.performance;
+    criteria.push({
+      criterion: "performance",
+      score: performanceScore(input.performance, input.position),
+      weight: VALUATION_WEIGHTS.performance,
+      label: `${minutesPlayed} min · ${goals} b. · ${assists} p.d.`,
+    });
+  }
+
+  // `community` stays absent until the vote exists. Its weight is redistributed,
+  // not counted as zero.
   const totalWeight = Object.values(VALUATION_WEIGHTS).reduce((a, b) => a + b, 0);
   const usedWeight = criteria.reduce((sum, item) => sum + item.weight, 0);
 

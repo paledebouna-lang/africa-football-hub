@@ -1,4 +1,4 @@
-import { computeValuation } from "../src/lib/valuation";
+import { computeValuation, type ValuationInput } from "../src/lib/valuation";
 
 const now = new Date("2026-08-08");
 
@@ -12,65 +12,80 @@ function contractIn(months: number): Date {
   return date;
 }
 
-const profiles = [
+const profiles: { label: string; input: Omit<ValuationInput, "now"> }[] = [
   {
-    label: "Espoir 19 ans, Al Ahly (1.00), titulaire, contrat 4 ans, U20",
+    label: "Buteur 24 ans, Al Ahly (1.00), 28 matchs, 18 buts 6 passes",
     input: {
-      dateOfBirth: birthdayFor(19),
+      dateOfBirth: birthdayFor(24),
       squadLevel: "FIRST_TEAM",
-      contractUntil: contractIn(48),
+      contractUntil: contractIn(30),
       competitionStrength: 1.0,
-      nationalTeam: { level: "U20", caps: 6 },
+      nationalTeam: { level: "SENIOR", caps: 12 },
+      position: "ST",
+      performance: {
+        minutesPlayed: 2450,
+        goals: 18,
+        assists: 6,
+        clubMatches: 30,
+      },
     },
   },
   {
-    label: "Cadre 25 ans, Botola (0.95), titulaire, contrat 2 ans, 15 sél. A",
+    label: "Même buteur, mais saison blanche (aucune statistique)",
     input: {
-      dateOfBirth: birthdayFor(25),
+      dateOfBirth: birthdayFor(24),
+      squadLevel: "FIRST_TEAM",
+      contractUntil: contractIn(30),
+      competitionStrength: 1.0,
+      nationalTeam: { level: "SENIOR", caps: 12 },
+      position: "ST",
+      performance: null,
+    },
+  },
+  {
+    label: "Défenseur central 26 ans, Botola (0.95), 27 matchs, 2 buts",
+    input: {
+      dateOfBirth: birthdayFor(26),
       squadLevel: "FIRST_TEAM",
       contractUntil: contractIn(24),
       competitionStrength: 0.95,
-      nationalTeam: { level: "SENIOR", caps: 15 },
+      nationalTeam: null,
+      position: "CB",
+      performance: {
+        minutesPlayed: 2400,
+        goals: 2,
+        assists: 1,
+        clubMatches: 28,
+      },
     },
   },
   {
-    label: "Vétéran 33 ans, Ligue 1 SEN (0.70), titulaire, contrat 4 mois",
+    label: "Remplaçant 21 ans, NPFL (0.70), 400 min, 3 buts",
     input: {
-      dateOfBirth: birthdayFor(33),
+      dateOfBirth: birthdayFor(21),
       squadLevel: "FIRST_TEAM",
-      contractUntil: contractIn(4),
+      contractUntil: contractIn(36),
       competitionStrength: 0.7,
       nationalTeam: null,
+      position: "LW",
+      performance: {
+        minutesPlayed: 400,
+        goals: 3,
+        assists: 2,
+        clubMatches: 26,
+      },
     },
   },
   {
-    label: "Jeune 17 ans, académie (0.30), équipe jeunes, aucun contrat",
+    label: "Jeune 17 ans en académie (0.30), équipe jeunes, aucune donnée",
     input: {
       dateOfBirth: birthdayFor(17),
       squadLevel: "YOUTH",
       contractUntil: null,
       competitionStrength: 0.3,
       nationalTeam: null,
-    },
-  },
-  {
-    label: "Réserviste 22 ans, NPFL (0.70), réserve, contrat 3 ans",
-    input: {
-      dateOfBirth: birthdayFor(22),
-      squadLevel: "RESERVE",
-      contractUntil: contractIn(36),
-      competitionStrength: 0.7,
-      nationalTeam: null,
-    },
-  },
-  {
-    label: "Inconnu total : aucune donnée hors club amateur (0.10)",
-    input: {
-      dateOfBirth: null,
-      squadLevel: "FIRST_TEAM",
-      contractUntil: null,
-      competitionStrength: 0.1,
-      nationalTeam: null,
+      position: null,
+      performance: null,
     },
   },
 ];

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 import { youtubeVideoId } from "@/lib/youtube";
-import { computeValuation } from "@/lib/valuation";
+import { refreshPlayerValuation } from "@/lib/refresh-valuation";
 import { requireOrganisation, assertPlayerInScope } from "@/lib/org-access";
 
 export type OrgState = { error?: string } | undefined;
@@ -41,47 +41,6 @@ async function uniquePlayerSlug(name: string, currentId?: string): Promise<strin
     candidate = `${seed}-${counter}`;
     counter += 1;
   }
-}
-
-/** Same engine as the admin uses, so a club-entered player is priced identically. */
-async function refreshComputedValue(playerId: string): Promise<void> {
-  const player = await prisma.player.findUnique({
-    where: { id: playerId },
-    include: {
-      club: { include: { primaryCompetition: true } },
-      selections: { orderBy: { caps: "desc" } },
-      marketValues: { orderBy: { effectiveAt: "desc" }, take: 1 },
-    },
-  });
-  if (!player) return;
-
-  const latest = player.marketValues[0];
-  if (latest?.source === "MANUAL") return;
-
-  const best =
-    player.selections.find((selection) => selection.level === "SENIOR") ??
-    player.selections[0] ??
-    null;
-
-  const result = computeValuation({
-    dateOfBirth: player.dateOfBirth,
-    squadLevel: player.squadLevel,
-    contractUntil: player.contractUntil,
-    competitionStrength: player.club?.primaryCompetition?.strengthCoefficient ?? null,
-    nationalTeam: best ? { level: best.level, caps: best.caps } : null,
-  });
-
-  if (latest && latest.valueUsd === result.valueUsd) return;
-
-  await prisma.marketValue.create({
-    data: {
-      playerId,
-      valueUsd: result.valueUsd,
-      source: "ALGORITHM",
-      confidence: result.confidence,
-      breakdown: { baseUsd: result.baseUsd, criteria: result.criteria },
-    },
-  });
 }
 
 const playerSchema = z.object({
@@ -146,7 +105,7 @@ export async function saveOrgPlayer(
     });
   }
 
-  await refreshComputedValue(player.id);
+  await refreshPlayerValuation(player.id);
 
   revalidatePath(`/fr/account/org/${context.organisationName}`);
   revalidatePath("/", "layout");

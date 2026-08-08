@@ -12,6 +12,8 @@ import { ProfileHeader, Badge, DataGrid, DataPoint } from "@/components/profile-
 import { DataTable, SectionTitle } from "@/components/data-table";
 import { PlayerPhoto, Crest, Flag } from "@/components/ui/media";
 import { HonoursList } from "@/components/honours-list";
+import { StatisticsTable } from "@/components/statistics-table";
+import { playerStatistics } from "@/lib/statistics";
 
 export default async function PlayerPage({
   params,
@@ -42,6 +44,7 @@ export default async function PlayerPage({
       : null;
 
   const competitions = player.club?.entries ?? [];
+  const statistics = await playerStatistics(player.id);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
@@ -151,6 +154,28 @@ export default async function PlayerPage({
             confidence: t.raw("valuation.confidence") as string,
           }}
         />
+      )}
+
+      {statistics.length > 0 && (
+        <section>
+          <SectionTitle>{t("statistics.title")}</SectionTitle>
+          <StatisticsTable
+            lines={statistics}
+            locale={locale}
+            showCleanSheets={player.position === "GK"}
+            labels={{
+              season: t("transfers.season"),
+              competition: t("transfers.competition"),
+              appearances: t("statistics.appearances"),
+              minutes: t("statistics.minutes"),
+              goals: t("statistics.goals"),
+              assists: t("statistics.assists"),
+              cleanSheets: t("statistics.cleanSheets"),
+              total: t("statistics.total"),
+            }}
+          />
+          <p className="mt-2 text-xs text-muted">{t("statistics.source")}</p>
+        </section>
       )}
 
       {player.marketValues.length >= 2 && (

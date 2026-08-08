@@ -35,12 +35,22 @@ export default async function OrgDashboardPage({
           </p>
           <h1 className="text-2xl font-bold">{context.organisationName}</h1>
         </div>
-        <Link
-          href={`/account/org/${slug}/players/new`}
-          className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
-        >
-          {t("org.addPlayer")}
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          {context.clubId && (
+            <Link
+              href={`/account/org/${slug}/matches`}
+              className="rounded-md border border-border px-4 py-2 text-sm font-semibold transition-colors hover:border-brand"
+            >
+              {t("match.title")}
+            </Link>
+          )}
+          <Link
+            href={`/account/org/${slug}/players/new`}
+            className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
+          >
+            {t("org.addPlayer")}
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

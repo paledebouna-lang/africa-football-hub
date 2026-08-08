@@ -96,6 +96,13 @@ enum ValuationSource {
   ALGORITHM
 }
 
+enum MatchStatus {
+  SCHEDULED
+  PLAYED
+  POSTPONED
+  CANCELLED
+}
+
 enum OrganisationType {
   CLUB
   ACADEMY
@@ -183,6 +190,7 @@ model Competition {
   primaryClubs Club[]            @relation("ClubPrimaryCompetition")
   entries      ClubCompetition[]
   honours      Honour[]
+  matches      Match[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -222,6 +230,9 @@ model Club {
   entries       ClubCompetition[]
   honours       Honour[]
   organisations Organisation[]
+  homeMatches   Match[]           @relation("HomeMatches")
+  awayMatches   Match[]           @relation("AwayMatches")
+  appearances   MatchAppearance[]
 
   transfersIn  Transfer[] @relation("TransferToClub")
   transfersOut Transfer[] @relation("TransferFromClub")
@@ -280,6 +291,7 @@ model Player {
   selections      NationalTeamSelection[]
   honours         Honour[]
   representations PlayerRepresentation[]
+  appearances     MatchAppearance[]
 
   /// Which organisation entered this player, kept for accountability once clubs
   /// and agencies start filling the database themselves.
@@ -426,6 +438,69 @@ model Honour {
   @@index([competitionId])
 }
 
+/// A fixture between two clubs. Each club fills in its own half of the team
+/// sheet, so neither depends on the other to record its players' minutes.
+model Match {
+  id            String      @id @default(cuid())
+  competitionId String
+  seasonId      String
+  homeClubId    String
+  awayClubId    String
+  date          DateTime
+  status        MatchStatus @default(PLAYED)
+  ageCategory   AgeCategory @default(SENIOR)
+  homeScore     Int?
+  awayScore     Int?
+  venue         String?
+  matchday      Int?
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  season      Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  homeClub    Club        @relation("HomeMatches", fields: [homeClubId], references: [id], onDelete: Cascade)
+  awayClub    Club        @relation("AwayMatches", fields: [awayClubId], references: [id], onDelete: Cascade)
+
+  appearances MatchAppearance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([competitionId, seasonId])
+  @@index([homeClubId, date])
+  @@index([awayClubId, date])
+  @@index([date])
+}
+
+/// One player's line on a team sheet. Every published statistic is derived from
+/// these rows, so a figure can always be traced back to the matches behind it.
+model MatchAppearance {
+  id       String @id @default(cuid())
+  matchId  String
+  playerId String
+  clubId   String
+
+  isStarter     Boolean @default(true)
+  minutesPlayed Int     @default(0)
+  goals         Int     @default(0)
+  assists       Int     @default(0)
+  yellowCards   Int     @default(0)
+  redCards      Int     @default(0)
+  ownGoals      Int     @default(0)
+  /// Goalkeepers only; ignored for outfield players.
+  goalsConceded Int?
+  cleanSheet    Boolean @default(false)
+
+  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  club   Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([matchId, playerId])
+  @@index([playerId])
+  @@index([clubId, matchId])
+}
+
 model Season {
   id        String   @id @default(cuid())
   label     String   @unique
@@ -435,6 +510,7 @@ model Season {
 
   transfers Transfer[]
   entries   ClubCompetition[]
+  matches   Match[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
