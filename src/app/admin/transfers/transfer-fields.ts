@@ -22,7 +22,7 @@ type TransferDefaults = {
   seasonId?: string | null;
   date?: Date | null;
   type?: string;
-  feeEur?: number | null;
+  feeUsd?: number | null;
   isFeeUndisclosed?: boolean;
 };
 
@@ -85,10 +85,10 @@ export function transferFields(
     },
     {
       kind: "number",
-      name: "feeEur",
-      label: "Montant (€)",
-      defaultValue: defaults.feeEur === null || defaults.feeEur === undefined ? "" : String(defaults.feeEur),
-      hint: "En euros, sans espaces ni symbole. Laisse vide pour un transfert gratuit.",
+      name: "feeUsd",
+      label: "Montant ($)",
+      defaultValue: defaults.feeUsd === null || defaults.feeUsd === undefined ? "" : String(defaults.feeUsd),
+      hint: "En dollars, sans espaces ni symbole. Laisse vide pour un transfert gratuit.",
     },
     {
       kind: "checkbox",

@@ -49,7 +49,7 @@ export default async function EditPlayerPage({
               value: country.id,
               label: country.nameFr,
             })),
-            player.marketValues[0]?.valueEur ?? null,
+            player.marketValues[0]?.valueUsd ?? null,
             player,
           )}
         />

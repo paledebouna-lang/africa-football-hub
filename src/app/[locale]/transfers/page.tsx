@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { prisma } from "@/lib/prisma";
-import { formatEur, formatDate } from "@/lib/format";
+import { formatUsd, formatDate } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
 import { getFilteredTransfers } from "@/lib/queries";
 import { TransferFiltersForm } from "@/components/transfer-filters-form";
@@ -129,7 +129,7 @@ export default async function TransfersPage({
                   <td className="px-4 py-3 text-end tabular-nums font-medium">
                     {transfer.isFeeUndisclosed
                       ? t("transfers.undisclosed")
-                      : formatEur(transfer.feeEur, locale)}
+                      : formatUsd(transfer.feeUsd, locale)}
                   </td>
                 </tr>
               ))}

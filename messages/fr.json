@@ -83,7 +83,31 @@
     "watchOnYoutube": "Voir sur YouTube",
     "estimated": "Estimation",
     "confidence": "Fiabilité de l'estimation : {percent} %",
-    "howComputed": "Comment cette valeur est calculée"
+    "howComputed": "Comment cette valeur est calculée",
+    "squadLevel": "Niveau d'équipe"
+  },
+  "squadLevel": {
+    "FIRST_TEAM": "Équipe première",
+    "RESERVE": "Équipe réserve",
+    "YOUTH": "Équipe de jeunes"
+  },
+  "valuation": {
+    "title": "Comment cette valeur est calculée",
+    "base": "Valeur de départ, selon le niveau du championnat et la place dans l'effectif :",
+    "criterion": "Critère",
+    "weight": "Poids",
+    "effect": "Effet",
+    "missing": "Critères non encore disponibles :",
+    "confidence": "Fiabilité : {percent} % des critères ont pu être calculés.",
+    "manual": "Valeur fixée par la rédaction"
+  },
+  "valuationCriterion": {
+    "performance": "Performances et temps de jeu",
+    "age": "Âge et trajectoire",
+    "clubLevel": "Niveau du club et de la compétition",
+    "community": "Vote de la communauté",
+    "contract": "Situation contractuelle",
+    "nationalTeam": "Sélection nationale"
   },
   "transfers": {
     "title": "Transferts",

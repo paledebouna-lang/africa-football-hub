@@ -6,27 +6,28 @@ const INTL_LOCALES: Record<Locale, string> = {
   ar: "ar-EG",
 };
 
-/** Formats a value in euros as a compact market value, e.g. "1,2 M €" / "450 k €". */
-export function formatEur(value: number | null | undefined, locale: Locale): string {
-  if (value === null || value === undefined) return "—";
-
-  const intlLocale = INTL_LOCALES[locale];
-  const formatter = new Intl.NumberFormat(intlLocale, {
-    style: "currency",
-    currency: "EUR",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  });
-  return formatter.format(value);
-}
-
-/** Formats a value in euros in full, e.g. "1 200 000 €". Used in admin and detail rows. */
-export function formatEurFull(value: number | null | undefined, locale: Locale): string {
+/** Compact market value, e.g. "1,2 M $" / "450 k $". Used in dense tables. */
+export function formatUsd(value: number | null | undefined, locale: Locale): string {
   if (value === null || value === undefined) return "—";
 
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",
-    currency: "EUR",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+/** Full value, e.g. "1 200 000 $". Used on profile headers and in the admin. */
+export function formatUsdFull(
+  value: number | null | undefined,
+  locale: Locale,
+): string {
+  if (value === null || value === undefined) return "—";
+
+  return new Intl.NumberFormat(INTL_LOCALES[locale], {
+    style: "currency",
+    currency: "USD",
     maximumFractionDigits: 0,
   }).format(value);
 }
@@ -41,14 +42,29 @@ export function formatDate(date: Date | null | undefined, locale: Locale): strin
   }).format(date);
 }
 
-export function ageFrom(dateOfBirth: Date | null | undefined): number | null {
+/**
+ * Calendar age, not an average-days approximation — over 25 years the leap-day
+ * drift is enough to report someone as a year younger on their birthday.
+ */
+export function ageFrom(
+  dateOfBirth: Date | null | undefined,
+  now: Date = new Date(),
+): number | null {
   if (!dateOfBirth) return null;
 
-  const now = new Date();
   let age = now.getFullYear() - dateOfBirth.getFullYear();
   const monthDiff = now.getMonth() - dateOfBirth.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dateOfBirth.getDate())) {
     age -= 1;
   }
   return age;
+}
+
+/** Whole calendar months between two dates, floored at the day of month. */
+export function monthsUntil(target: Date, now: Date = new Date()): number {
+  let months =
+    (target.getFullYear() - now.getFullYear()) * 12 +
+    (target.getMonth() - now.getMonth());
+  if (target.getDate() < now.getDate()) months -= 1;
+  return months;
 }

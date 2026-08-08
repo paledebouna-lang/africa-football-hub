@@ -9,12 +9,12 @@ const withLatestValue = {
 } as const;
 
 export function currentValueOf(player: {
-  marketValues: { valueEur: number }[];
+  marketValues: { valueUsd: number }[];
 }): number | null {
-  return player.marketValues[0]?.valueEur ?? null;
+  return player.marketValues[0]?.valueUsd ?? null;
 }
 
-export function squadValue(players: { marketValues: { valueEur: number }[] }[]): number {
+export function squadValue(players: { marketValues: { valueUsd: number }[] }[]): number {
   return players.reduce((total, player) => total + (currentValueOf(player) ?? 0), 0);
 }
 

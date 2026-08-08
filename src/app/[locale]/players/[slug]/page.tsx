@@ -2,11 +2,12 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { formatEur, formatEurFull, formatDate, ageFrom } from "@/lib/format";
+import { formatUsd, formatUsdFull, formatDate, ageFrom } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
 import { getPlayerBySlug } from "@/lib/queries";
 import { ValueChart } from "@/components/value-chart";
 import { VideoGallery } from "@/components/video-gallery";
+import { ValuationBreakdown, type Breakdown } from "@/components/valuation-breakdown";
 
 export default async function PlayerPage({
   params,
@@ -24,6 +25,15 @@ export default async function PlayerPage({
   const latest =
     player.marketValues.length > 0
       ? player.marketValues[player.marketValues.length - 1]
+      : null;
+
+  // `breakdown` is stored as JSON, so it is validated rather than trusted.
+  const breakdown =
+    latest?.source === "ALGORITHM" &&
+    latest.breakdown !== null &&
+    typeof latest.breakdown === "object" &&
+    "criteria" in latest.breakdown
+      ? (latest.breakdown as unknown as Breakdown)
       : null;
 
   const competitions = player.club?.entries ?? [];
@@ -46,10 +56,10 @@ export default async function PlayerPage({
         <h1 className="text-2xl font-bold">{playerName(player, locale)}</h1>
 
         <p className="mt-2 text-lg font-semibold text-brand">
-          {latest === null ? t("player.noValue") : formatEurFull(latest.valueEur, locale)}
+          {latest === null ? t("player.noValue") : formatUsdFull(latest.valueUsd, locale)}
         </p>
 
-        {latest?.source === "ALGORITHM" && latest.confidence !== null && (
+        {latest?.source === "ALGORITHM" && (
           <p className="mt-1 text-xs text-muted">
             {t("player.estimated")} ·{" "}
             {t("player.confidence", {
@@ -57,7 +67,28 @@ export default async function PlayerPage({
             })}
           </p>
         )}
+        {latest?.source === "MANUAL" && (
+          <p className="mt-1 text-xs text-muted">{t("valuation.manual")}</p>
+        )}
       </header>
+
+      {breakdown && latest && (
+        <ValuationBreakdown
+          breakdown={breakdown}
+          confidence={latest.confidence ?? 0}
+          formatValue={(value) => formatUsdFull(value, locale)}
+          criterionLabel={(criterion) => t(`valuationCriterion.${criterion}`)}
+          labels={{
+            title: t("valuation.title"),
+            base: t("valuation.base"),
+            criterion: t("valuation.criterion"),
+            weight: t("valuation.weight"),
+            effect: t("valuation.effect"),
+            missing: t("valuation.missing"),
+            confidence: t.raw("valuation.confidence") as string,
+          }}
+        />
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <InfoCard
@@ -71,6 +102,10 @@ export default async function PlayerPage({
         <InfoCard
           label={t("player.category")}
           value={t(`ageCategory.${player.ageCategory}`)}
+        />
+        <InfoCard
+          label={t("player.squadLevel")}
+          value={t(`squadLevel.${player.squadLevel}`)}
         />
         <InfoCard
           label={t("player.nationality")}
@@ -177,9 +212,9 @@ export default async function PlayerPage({
             <ValueChart
               points={player.marketValues.map((entry) => ({
                 date: entry.effectiveAt,
-                value: entry.valueEur,
+                value: entry.valueUsd,
               }))}
-              formatValue={(value) => formatEur(value, locale)}
+              formatValue={(value) => formatUsd(value, locale)}
               formatDate={(date) => formatDate(date, locale)}
             />
           </div>
@@ -232,7 +267,7 @@ export default async function PlayerPage({
                     <td className="px-4 py-3 text-end tabular-nums font-medium">
                       {transfer.isFeeUndisclosed
                         ? t("transfers.undisclosed")
-                        : formatEur(transfer.feeEur, locale)}
+                        : formatUsd(transfer.feeUsd, locale)}
                     </td>
                   </tr>
                 ))}

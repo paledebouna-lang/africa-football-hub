@@ -19,9 +19,9 @@ export default async function AdminTransfersPage() {
     prisma.player.count(),
   ]);
 
-  const euro = new Intl.NumberFormat("fr-FR", {
+  const money = new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "EUR",
+    currency: "USD",
     maximumFractionDigits: 0,
   });
   const dateFormat = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" });
@@ -92,8 +92,8 @@ export default async function AdminTransfersPage() {
                   <td className="px-4 py-3 text-right tabular-nums">
                     {transfer.isFeeUndisclosed
                       ? "Non communiqué"
-                      : transfer.feeEur !== null
-                        ? euro.format(transfer.feeEur)
+                      : transfer.feeUsd !== null
+                        ? money.format(transfer.feeUsd)
                         : "—"}
                   </td>
                   <td className="px-4 py-3">

@@ -19,9 +19,9 @@ export default async function AdminPlayersPage() {
     },
   });
 
-  const euro = new Intl.NumberFormat("fr-FR", {
+  const money = new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "EUR",
+    currency: "USD",
     maximumFractionDigits: 0,
   });
 
@@ -73,7 +73,7 @@ export default async function AdminPlayersPage() {
                   <td className="px-4 py-3 text-muted">{player.position ?? "—"}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
                     {player.marketValues[0]
-                      ? euro.format(player.marketValues[0].valueEur)
+                      ? money.format(player.marketValues[0].valueUsd)
                       : "—"}
                   </td>
                   <td className="px-4 py-3">

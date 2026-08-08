@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { formatEur } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { localizedName } from "@/lib/localized";
 import { getCompetitionBySlug, squadValue } from "@/lib/queries";
 
@@ -71,7 +71,7 @@ export default async function CompetitionPage({
                       {club._count.players}
                     </td>
                     <td className="px-4 py-3 text-end tabular-nums font-medium">
-                      {total > 0 ? formatEur(total, locale) : "—"}
+                      {total > 0 ? formatUsd(total, locale) : "—"}
                     </td>
                   </tr>
                 );

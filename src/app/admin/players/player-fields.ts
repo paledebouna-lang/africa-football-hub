@@ -19,6 +19,12 @@ const FEET: FieldOption[] = [
   { value: "BOTH", label: "Les deux" },
 ];
 
+const SQUAD_LEVELS: FieldOption[] = [
+  { value: "FIRST_TEAM", label: "Équipe première" },
+  { value: "RESERVE", label: "Équipe réserve" },
+  { value: "YOUTH", label: "Équipe de jeunes" },
+];
+
 const AGE_CATEGORIES: FieldOption[] = [
   { value: "SENIOR", label: "Seniors" },
   { value: "U23", label: "Moins de 23 ans" },
@@ -47,12 +53,13 @@ type PlayerDefaults = {
   clubId?: string | null;
   nationalityId?: string | null;
   ageCategory?: string;
+  squadLevel?: string;
 };
 
 export function playerFields(
   clubs: FieldOption[],
   countries: FieldOption[],
-  currentValueEur: number | null,
+  currentValueUsd: number | null,
   defaults: PlayerDefaults = {},
 ): Field[] {
   return [
@@ -94,6 +101,15 @@ export function playerFields(
       options: AGE_CATEGORIES,
       defaultValue: defaults.ageCategory ?? "SENIOR",
       hint: "Détermine le groupe dans lequel le joueur apparaît sur la fiche du club.",
+    },
+    {
+      kind: "select",
+      name: "squadLevel",
+      label: "Niveau d'équipe",
+      placeholder: "Équipe première",
+      options: SQUAD_LEVELS,
+      defaultValue: defaults.squadLevel ?? "FIRST_TEAM",
+      hint: "Indépendant de l'âge. C'est ce champ qui fixe la valeur de départ du joueur.",
     },
     {
       kind: "date",
@@ -150,10 +166,10 @@ export function playerFields(
     },
     {
       kind: "number",
-      name: "marketValueEur",
-      label: "Valeur marchande (€)",
-      defaultValue: currentValueEur === null ? "" : String(currentValueEur),
-      hint: "En euros, sans espaces ni symbole. Chaque changement est conservé dans l'historique.",
+      name: "marketValueUsd",
+      label: "Valeur marchande ($)",
+      defaultValue: currentValueUsd === null ? "" : String(currentValueUsd),
+      hint: "Laisse vide pour que la plateforme calcule la valeur automatiquement. Une valeur saisie ici prime sur le calcul.",
     },
   ];
 }

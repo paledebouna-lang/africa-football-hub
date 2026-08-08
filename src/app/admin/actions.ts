@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 import { youtubeVideoId } from "@/lib/youtube";
+import { computeValuation } from "@/lib/valuation";
 import {
   verifyPassword,
   startAdminSession,
@@ -167,6 +168,56 @@ export async function deleteClub(formData: FormData): Promise<void> {
 
 // ---------------------------------------------------------------- players
 
+/**
+ * Recomputes a player's value from the engine and stores it, unless an editor has
+ * set the value by hand — a manual figure is never overwritten by the formula.
+ * A new history point is only written when the number actually moves, so the
+ * value chart shows real changes rather than one dot per save.
+ */
+async function refreshComputedValue(playerId: string): Promise<void> {
+  const player = await prisma.player.findUnique({
+    where: { id: playerId },
+    include: {
+      club: { include: { primaryCompetition: true } },
+      selections: { orderBy: { caps: "desc" } },
+      marketValues: { orderBy: { effectiveAt: "desc" }, take: 1 },
+    },
+  });
+  if (!player) return;
+
+  const latest = player.marketValues[0];
+  if (latest?.source === "MANUAL") return;
+
+  // Senior caps outrank youth ones regardless of how many were won.
+  const best =
+    player.selections.find((selection) => selection.level === "SENIOR") ??
+    player.selections[0] ??
+    null;
+
+  const result = computeValuation({
+    dateOfBirth: player.dateOfBirth,
+    squadLevel: player.squadLevel,
+    contractUntil: player.contractUntil,
+    competitionStrength: player.club?.primaryCompetition?.strengthCoefficient ?? null,
+    nationalTeam: best ? { level: best.level, caps: best.caps } : null,
+  });
+
+  if (latest && latest.valueUsd === result.valueUsd) return;
+
+  await prisma.marketValue.create({
+    data: {
+      playerId,
+      valueUsd: result.valueUsd,
+      source: "ALGORITHM",
+      confidence: result.confidence,
+      breakdown: {
+        baseUsd: result.baseUsd,
+        criteria: result.criteria,
+      },
+    },
+  });
+}
+
 const playerSchema = z.object({
   name: z.string().trim().min(1, "Le nom du joueur est obligatoire."),
 });
@@ -194,6 +245,7 @@ export async function savePlayer(
     position: position as never,
     foot: foot as never,
     ageCategory: (optionalText(formData.get("ageCategory")) ?? "SENIOR") as never,
+    squadLevel: (optionalText(formData.get("squadLevel")) ?? "FIRST_TEAM") as never,
     heightCm: optionalInt(formData.get("heightCm")),
     shirtNumber: optionalInt(formData.get("shirtNumber")),
     contractUntil: optionalDate(formData.get("contractUntil")),
@@ -209,19 +261,26 @@ export async function savePlayer(
     ? await prisma.player.update({ where: { id }, data: { ...data, slug } })
     : await prisma.player.create({ data: { ...data, slug } });
 
-  // A value typed on the player form is recorded as a new point in the history.
-  const marketValue = optionalInt(formData.get("marketValueEur"));
-  if (marketValue !== null) {
+  // A value typed on the form always wins over the engine: an editor who has
+  // looked at the player knows more than a formula.
+  const manualValue = optionalInt(formData.get("marketValueUsd"));
+  if (manualValue !== null) {
     const latest = await prisma.marketValue.findFirst({
       where: { playerId: player.id },
       orderBy: { effectiveAt: "desc" },
     });
 
-    if (!latest || latest.valueEur !== marketValue) {
+    if (!latest || latest.valueUsd !== manualValue) {
       await prisma.marketValue.create({
-        data: { playerId: player.id, valueEur: marketValue },
+        data: {
+          playerId: player.id,
+          valueUsd: manualValue,
+          source: "MANUAL",
+        },
       });
     }
+  } else {
+    await refreshComputedValue(player.id);
   }
 
   revalidatePath("/admin/players");
@@ -277,7 +336,7 @@ export async function saveTransfer(
     seasonId: optionalText(formData.get("seasonId")),
     date,
     type: parsed.data.type as never,
-    feeEur: optionalInt(formData.get("feeEur")),
+    feeUsd: optionalInt(formData.get("feeUsd")),
     isFeeUndisclosed: formData.get("isFeeUndisclosed") === "on",
   };
 
@@ -294,6 +353,9 @@ export async function saveTransfer(
       data: { clubId: toClubId },
     });
   }
+
+  // A new club usually means a new competition level, hence a new value.
+  await refreshComputedValue(data.playerId);
 
   revalidatePath("/admin/transfers");
   revalidatePublicSite();
@@ -571,6 +633,9 @@ export async function saveSelection(
     update: data,
     create: { playerId, countryId, level, ...data },
   });
+
+  // Caps feed the valuation, so the estimate is refreshed straight away.
+  await refreshComputedValue(playerId);
 
   revalidatePath(`/admin/players/${playerId}`);
   revalidatePublicSite();

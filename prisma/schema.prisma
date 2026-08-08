@@ -35,6 +35,15 @@ enum AgeCategory {
   U15
 }
 
+/// Where a player actually sits in the club hierarchy. Deliberately separate from
+/// AgeCategory: a promising U19 can hold a first-team place while a 28-year-old
+/// sits in the reserves, and the starting valuation depends on this, not on age.
+enum SquadLevel {
+  FIRST_TEAM
+  RESERVE
+  YOUTH
+}
+
 enum CompetitionType {
   LEAGUE
   CUP
@@ -216,6 +225,7 @@ model Player {
   position      Position?
   foot          Foot?
   ageCategory   AgeCategory  @default(SENIOR)
+  squadLevel    SquadLevel   @default(FIRST_TEAM)
   heightCm      Int?
   shirtNumber   Int?
   contractUntil DateTime?
@@ -240,6 +250,7 @@ model Player {
   @@index([nationalityId])
   @@index([name])
   @@index([ageCategory])
+  @@index([clubId, squadLevel])
 }
 
 /// A player's involvement with a national team at a given level.
@@ -323,7 +334,7 @@ model TrainingCostRate {
   id            String        @id @default(cuid())
   confederation Confederation
   category      Int
-  amountEur     Int
+  amountUsd     Int
   year          Int
   /// Circular the figures come from, e.g. "FIFA Circular 1936 (2025)".
   source String?
@@ -357,7 +368,7 @@ model Transfer {
   seasonId         String?
   date             DateTime
   type             TransferType @default(PERMANENT)
-  feeEur           Int?
+  feeUsd           Int?
   isFeeUndisclosed Boolean      @default(false)
 
   player   Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
@@ -376,7 +387,7 @@ model Transfer {
 model MarketValue {
   id          String          @id @default(cuid())
   playerId    String
-  valueEur    Int
+  valueUsd    Int
   effectiveAt DateTime        @default(now())
   note        String?
   source      ValuationSource @default(MANUAL)
@@ -414,7 +425,7 @@ model ValueProposal {
   id           String         @id @default(cuid())
   playerId     String
   userId       String
-  valueEur     Int
+  valueUsd     Int
   comment      String?
   status       ProposalStatus @default(PENDING)
   reviewedById String?

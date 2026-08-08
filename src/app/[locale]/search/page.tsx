@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { formatEur } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
 import { searchAll, currentValueOf } from "@/lib/queries";
 
@@ -62,7 +62,7 @@ export default async function SearchPage({
                 )}
               </span>
               <span className="shrink-0 font-medium text-brand">
-                {formatEur(currentValueOf(player), locale)}
+                {formatUsd(currentValueOf(player), locale)}
               </span>
             </li>
           ))}

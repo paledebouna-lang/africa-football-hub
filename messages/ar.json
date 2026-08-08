@@ -83,7 +83,31 @@
     "watchOnYoutube": "المشاهدة على يوتيوب",
     "estimated": "تقدير",
     "confidence": "درجة موثوقية التقدير: {percent}٪",
-    "howComputed": "كيف تُحتسب هذه القيمة"
+    "howComputed": "كيف تُحتسب هذه القيمة",
+    "squadLevel": "مستوى الفريق"
+  },
+  "squadLevel": {
+    "FIRST_TEAM": "الفريق الأول",
+    "RESERVE": "فريق الرديف",
+    "YOUTH": "فريق الشباب"
+  },
+  "valuation": {
+    "title": "كيف تُحتسب هذه القيمة",
+    "base": "القيمة الأساسية، حسب مستوى الدوري وموقع اللاعب في التشكيلة:",
+    "criterion": "المعيار",
+    "weight": "الوزن",
+    "effect": "الأثر",
+    "missing": "معايير غير متوفرة بعد:",
+    "confidence": "الموثوقية: تم احتساب {percent}٪ من المعايير.",
+    "manual": "قيمة حددتها هيئة التحرير"
+  },
+  "valuationCriterion": {
+    "performance": "الأداء ووقت اللعب",
+    "age": "العمر والمسار",
+    "clubLevel": "مستوى النادي والمسابقة",
+    "community": "تصويت المجتمع",
+    "contract": "الوضع التعاقدي",
+    "nationalTeam": "المنتخب الوطني"
   },
   "transfers": {
     "title": "الانتقالات",

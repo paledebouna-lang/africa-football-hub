@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { formatEur, formatDate, ageFrom } from "@/lib/format";
+import { formatUsd, formatDate, ageFrom } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
 import { getClubBySlug, currentValueOf, squadValue } from "@/lib/queries";
 import { groupByAgeCategory } from "@/lib/categories";
@@ -61,7 +61,7 @@ export default async function ClubPage({
         />
         <InfoCard
           label={t("club.totalValue")}
-          value={total > 0 ? formatEur(total, locale) : "—"}
+          value={total > 0 ? formatUsd(total, locale) : "—"}
         />
       </section>
 
@@ -154,7 +154,7 @@ export default async function ClubPage({
                             {ageFrom(player.dateOfBirth) ?? "—"}
                           </td>
                           <td className="px-4 py-3 text-end tabular-nums font-medium">
-                            {formatEur(currentValueOf(player), locale)}
+                            {formatUsd(currentValueOf(player), locale)}
                           </td>
                         </tr>
                       ))}
@@ -205,7 +205,7 @@ export default async function ClubPage({
             date: formatDate(transfer.date, locale),
             fee: transfer.isFeeUndisclosed
               ? t("transfers.undisclosed")
-              : formatEur(transfer.feeEur, locale),
+              : formatUsd(transfer.feeUsd, locale),
           }))}
         />
         <TransferList
@@ -219,7 +219,7 @@ export default async function ClubPage({
             date: formatDate(transfer.date, locale),
             fee: transfer.isFeeUndisclosed
               ? t("transfers.undisclosed")
-              : formatEur(transfer.feeEur, locale),
+              : formatUsd(transfer.feeUsd, locale),
           }))}
         />
       </div>

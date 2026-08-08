@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { site } from "@/lib/site";
-import { formatEur, formatDate } from "@/lib/format";
+import { formatUsd, formatDate } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
 import {
   getCompetitions,
@@ -94,7 +94,7 @@ export default async function HomePage({
                     <span className="text-muted shrink-0">
                       {transfer.isFeeUndisclosed
                         ? t("transfers.undisclosed")
-                        : formatEur(transfer.feeEur, locale)}
+                        : formatUsd(transfer.feeUsd, locale)}
                     </span>
                   </div>
                   <p className="mt-1 text-muted">
@@ -133,7 +133,7 @@ export default async function HomePage({
                     </Link>
                   </span>
                   <span className="shrink-0 font-medium text-brand">
-                    {formatEur(value, locale)}
+                    {formatUsd(value, locale)}
                   </span>
                 </li>
               ))}
