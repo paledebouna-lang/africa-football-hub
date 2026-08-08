@@ -105,6 +105,11 @@
     "title": "Palmarès",
     "none": "Aucun titre enregistré."
   },
+  "nationalTeam": {
+    "title": "Sélection nationale",
+    "squad": "Joueurs sélectionnés",
+    "noSquad": "Aucun joueur sélectionné actuellement."
+  },
   "honourType": {
     "WINNER": "Vainqueur",
     "RUNNER_UP": "Finaliste",

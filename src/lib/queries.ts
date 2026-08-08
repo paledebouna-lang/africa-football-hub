@@ -142,6 +142,23 @@ export async function getPlayerBySlug(slug: string) {
   });
 }
 
+// ---------------------------------------------------------------- national teams
+
+export async function getCountryBySlug(slug: string) {
+  return prisma.country.findUnique({
+    where: { slug },
+    include: {
+      ...withHonours,
+      competitions: { orderBy: { nameFr: "asc" } },
+      selections: {
+        where: { isCurrent: true },
+        orderBy: [{ level: "asc" }, { caps: "desc" }],
+        include: { player: { include: { ...withLatestValue, club: true } } },
+      },
+    },
+  });
+}
+
 // ---------------------------------------------------------------- coaches
 
 export async function getCoachBySlug(slug: string) {

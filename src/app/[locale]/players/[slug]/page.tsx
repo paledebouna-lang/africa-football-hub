@@ -188,7 +188,12 @@ export default async function PlayerPage({
                       src={selection.country.flagUrl}
                       label={localizedName(selection.country, locale)}
                     />
-                    {localizedName(selection.country, locale)}
+                    <Link
+                      href={`/national-teams/${selection.country.slug}`}
+                      className="font-medium hover:text-brand"
+                    >
+                      {localizedName(selection.country, locale)}
+                    </Link>
                     {selection.isCurrent && (
                       <Badge tone="brand">{t("player.currentlySelected")}</Badge>
                     )}

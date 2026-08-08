@@ -105,6 +105,11 @@
     "title": "Honours",
     "none": "No honours recorded."
   },
+  "nationalTeam": {
+    "title": "National team",
+    "squad": "Selected players",
+    "noSquad": "No players currently selected."
+  },
   "honourType": {
     "WINNER": "Winner",
     "RUNNER_UP": "Runner-up",

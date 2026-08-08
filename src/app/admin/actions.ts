@@ -372,6 +372,43 @@ export async function deleteTransfer(formData: FormData): Promise<void> {
   revalidatePublicSite();
 }
 
+// ---------------------------------------------------------------- countries
+
+const countrySchema = z.object({
+  nameFr: z.string().trim().min(1, "Le nom en français est obligatoire."),
+  nameEn: z.string().trim().min(1, "Le nom en anglais est obligatoire."),
+  nameAr: z.string().trim().min(1, "Le nom en arabe est obligatoire."),
+});
+
+export async function saveCountry(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const id = optionalText(formData.get("id"));
+  if (!id) return { error: "Pays introuvable." };
+
+  const parsed = countrySchema.safeParse({
+    nameFr: formData.get("nameFr"),
+    nameEn: formData.get("nameEn"),
+    nameAr: formData.get("nameAr"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  await prisma.country.update({
+    where: { id },
+    data: { ...parsed.data, flagUrl: optionalText(formData.get("flagUrl")) },
+  });
+
+  revalidatePath(`/admin/countries/${id}`);
+  revalidatePublicSite();
+  redirect("/admin/countries");
+}
+
 // ---------------------------------------------------------------- honours
 
 export async function saveHonour(
@@ -428,17 +465,30 @@ export async function saveHonour(
     },
   });
 
-  revalidatePath("/admin/honours");
   revalidatePublicSite();
-  redirect("/admin/honours");
+  redirect(adminPathForHolder(holders));
+}
+
+/** Honours are edited from a profile, so we return to the profile we came from. */
+function adminPathForHolder(holders: {
+  clubId: string | null;
+  playerId: string | null;
+  coachId: string | null;
+  countryId: string | null;
+}): string {
+  if (holders.clubId) return `/admin/clubs/${holders.clubId}`;
+  if (holders.playerId) return `/admin/players/${holders.playerId}`;
+  if (holders.coachId) return `/admin/coaches/${holders.coachId}`;
+  if (holders.countryId) return `/admin/countries/${holders.countryId}`;
+  return "/admin";
 }
 
 export async function deleteHonour(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = String(formData.get("id"));
 
-  await prisma.honour.delete({ where: { id } });
-  revalidatePath("/admin/honours");
+  const honour = await prisma.honour.delete({ where: { id } });
+  revalidatePath(adminPathForHolder(honour));
   revalidatePublicSite();
 }
 

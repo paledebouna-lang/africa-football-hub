@@ -70,6 +70,11 @@ export default async function AdminDashboard() {
             Enregistre les mouvements dans <strong>Transferts</strong> : le club du
             joueur est mis à jour automatiquement.
           </li>
+          <li>
+            Les <strong>palmarès</strong> se saisissent directement depuis la fiche
+            concernée : celle d&apos;un club, d&apos;un joueur, d&apos;un entraîneur,
+            ou d&apos;un pays pour une sélection nationale.
+          </li>
         </ol>
       </section>
     </AdminShell>

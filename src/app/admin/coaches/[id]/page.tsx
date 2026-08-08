@@ -6,6 +6,7 @@ import { AdminForm } from "@/components/admin-form";
 import { DeleteButton } from "@/components/delete-button";
 import { saveCoach, saveCoachSpell, deleteCoachSpell } from "../../actions";
 import { coachFields, coachSpellFields, COACH_ROLES } from "../coach-fields";
+import { HonoursManager } from "@/components/honours-manager";
 
 const ROLE_LABELS = Object.fromEntries(
   COACH_ROLES.map((role) => [role.value, role.label]),
@@ -115,6 +116,8 @@ export default async function EditCoachPage({
             )}
           />
         </section>
+
+        <HonoursManager holder={{ kind: "coachId", id: coach.id }} />
       </div>
     </AdminShell>
   );

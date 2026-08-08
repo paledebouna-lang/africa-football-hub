@@ -5,6 +5,7 @@ import { AdminShell } from "@/components/admin-shell";
 import { AdminForm } from "@/components/admin-form";
 import { savePlayer } from "../../actions";
 import { playerFields } from "../player-fields";
+import { HonoursManager } from "@/components/honours-manager";
 
 export default async function EditPlayerPage({
   params,
@@ -32,6 +33,7 @@ export default async function EditPlayerPage({
 
   return (
     <AdminShell title={`Modifier — ${player.name}`}>
+      <div className="space-y-8">
       <div className="rounded-lg border border-border bg-surface p-6">
         <AdminForm
           action={savePlayer}
@@ -53,6 +55,9 @@ export default async function EditPlayerPage({
             player,
           )}
         />
+      </div>
+
+        <HonoursManager holder={{ kind: "playerId", id: player.id }} />
       </div>
     </AdminShell>
   );

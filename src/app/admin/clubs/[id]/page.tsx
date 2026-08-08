@@ -5,6 +5,7 @@ import { AdminShell } from "@/components/admin-shell";
 import { AdminForm } from "@/components/admin-form";
 import { saveClub } from "../../actions";
 import { clubFields } from "../club-fields";
+import { HonoursManager } from "@/components/honours-manager";
 
 export default async function EditClubPage({
   params,
@@ -29,6 +30,7 @@ export default async function EditClubPage({
 
   return (
     <AdminShell title={`Modifier — ${club.nameFr}`}>
+      <div className="space-y-8">
       <div className="rounded-lg border border-border bg-surface p-6">
         <AdminForm
           action={saveClub}
@@ -46,6 +48,9 @@ export default async function EditClubPage({
             club,
           )}
         />
+      </div>
+
+        <HonoursManager holder={{ kind: "clubId", id: club.id }} />
       </div>
     </AdminShell>
   );
