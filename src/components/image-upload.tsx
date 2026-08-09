@@ -4,7 +4,7 @@
 
 import { useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { MISSING_CONFIG_MESSAGE } from "@/lib/supabase/config";
+import { missingConfigMessage } from "@/lib/supabase/config";
 
 /**
  * Picks an image, shrinks it in the browser, uploads it, and writes the resulting
@@ -74,7 +74,7 @@ export function ImageUpload({
       const supabase = createSupabaseBrowserClient();
       if (!supabase) {
         setStatus("error");
-        setMessage(MISSING_CONFIG_MESSAGE);
+        setMessage(missingConfigMessage());
         return;
       }
 
