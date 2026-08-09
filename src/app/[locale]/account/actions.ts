@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { MISSING_CONFIG_MESSAGE } from "@/lib/supabase/config";
 import { getAccount } from "@/lib/account";
 
 export type AuthState = { error?: string; notice?: string } | undefined;
@@ -29,6 +30,8 @@ export async function signUp(
   }
 
   const supabase = await createSupabaseServerClient();
+  if (!supabase) return { error: MISSING_CONFIG_MESSAGE };
+
   const { error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -64,6 +67,8 @@ export async function signIn(
   }
 
   const supabase = await createSupabaseServerClient();
+  if (!supabase) return { error: MISSING_CONFIG_MESSAGE };
+
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
@@ -75,7 +80,7 @@ export async function signIn(
 
 export async function signOut(): Promise<void> {
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
+  await supabase?.auth.signOut();
   redirect("/fr/account/sign-in");
 }
 

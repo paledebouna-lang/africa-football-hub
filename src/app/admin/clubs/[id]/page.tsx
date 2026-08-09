@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -49,6 +50,20 @@ export default async function EditClubPage({
           )}
         />
       </div>
+
+        <section className="rounded-lg border border-border bg-surface p-6">
+          <h2 className="mb-1 font-semibold">Matchs et feuilles de match</h2>
+          <p className="mb-4 text-sm text-muted">
+            Les feuilles de match alimentent automatiquement les statistiques des
+            joueurs. Elles se remplissent depuis l&apos;espace du club.
+          </p>
+          <Link
+            href={`/admin/clubs/${club.id}/matches`}
+            className="inline-block rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
+          >
+            Gérer les matchs de ce club
+          </Link>
+        </section>
 
         <HonoursManager holder={{ kind: "clubId", id: club.id }} />
       </div>

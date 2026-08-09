@@ -4,6 +4,7 @@
 
 import { useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { MISSING_CONFIG_MESSAGE } from "@/lib/supabase/config";
 
 /**
  * Picks an image, shrinks it in the browser, uploads it, and writes the resulting
@@ -70,9 +71,14 @@ export function ImageUpload({
     setMessage(null);
 
     try {
-      const blob = await shrink(file);
       const supabase = createSupabaseBrowserClient();
+      if (!supabase) {
+        setStatus("error");
+        setMessage(MISSING_CONFIG_MESSAGE);
+        return;
+      }
 
+      const blob = await shrink(file);
       const path = `${folder}/${crypto.randomUUID()}.jpg`;
       const { error } = await supabase.storage
         .from("media")

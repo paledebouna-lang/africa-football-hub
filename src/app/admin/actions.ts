@@ -336,6 +336,142 @@ export async function deleteTransfer(formData: FormData): Promise<void> {
   revalidatePublicSite();
 }
 
+// ---------------------------------------------------------------- matches
+
+export async function saveAdminMatch(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const clubId = optionalText(formData.get("clubId"));
+  const opponentId = optionalText(formData.get("opponentId"));
+  const competitionId = optionalText(formData.get("competitionId"));
+  const seasonId = optionalText(formData.get("seasonId"));
+  const matchDate = optionalDate(formData.get("date"));
+
+  if (!clubId || !opponentId || !competitionId || !seasonId || !matchDate) {
+    return {
+      error: "L'adversaire, la compétition, la saison et la date sont obligatoires.",
+    };
+  }
+  if (clubId === opponentId) {
+    return { error: "Un club ne peut pas jouer contre lui-même." };
+  }
+
+  const isHome = optionalText(formData.get("isHome")) === "1";
+  const ownScore = optionalInt(formData.get("ownScore"));
+  const opponentScore = optionalInt(formData.get("opponentScore"));
+
+  const match = await prisma.match.create({
+    data: {
+      competitionId,
+      seasonId,
+      date: matchDate,
+      homeClubId: isHome ? clubId : opponentId,
+      awayClubId: isHome ? opponentId : clubId,
+      homeScore: isHome ? ownScore : opponentScore,
+      awayScore: isHome ? opponentScore : ownScore,
+      ageCategory: (optionalText(formData.get("ageCategory")) ?? "SENIOR") as never,
+      venue: optionalText(formData.get("venue")),
+      matchday: optionalInt(formData.get("matchday")),
+    },
+  });
+
+  revalidatePath(`/admin/clubs/${clubId}/matches`);
+  revalidatePublicSite();
+  redirect(`/admin/clubs/${clubId}/matches/${match.id}`);
+}
+
+/** Records one club's half of a team sheet, from the admin side. */
+export async function saveAdminTeamSheet(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const matchId = optionalText(formData.get("matchId"));
+  const clubId = optionalText(formData.get("clubId"));
+  if (!matchId || !clubId) return { error: "Match introuvable." };
+
+  const squad = await prisma.player.findMany({
+    where: { clubId },
+    select: { id: true },
+  });
+
+  const touched: string[] = [];
+
+  for (const player of squad) {
+    const played = formData.get(`played_${player.id}`) === "on";
+
+    if (!played) {
+      const removed = await prisma.matchAppearance.deleteMany({
+        where: { matchId, playerId: player.id },
+      });
+      if (removed.count > 0) touched.push(player.id);
+      continue;
+    }
+
+    const data = {
+      clubId,
+      isStarter: formData.get(`starter_${player.id}`) === "on",
+      minutesPlayed: Math.max(
+        0,
+        Math.min(120, optionalInt(formData.get(`minutes_${player.id}`)) ?? 0),
+      ),
+      goals: Math.max(0, optionalInt(formData.get(`goals_${player.id}`)) ?? 0),
+      assists: Math.max(0, optionalInt(formData.get(`assists_${player.id}`)) ?? 0),
+      yellowCards: Math.max(
+        0,
+        Math.min(2, optionalInt(formData.get(`yellow_${player.id}`)) ?? 0),
+      ),
+      redCards: Math.max(
+        0,
+        Math.min(1, optionalInt(formData.get(`red_${player.id}`)) ?? 0),
+      ),
+      cleanSheet: formData.get(`clean_${player.id}`) === "on",
+    };
+
+    await prisma.matchAppearance.upsert({
+      where: { matchId_playerId: { matchId, playerId: player.id } },
+      update: data,
+      create: { matchId, playerId: player.id, ...data },
+    });
+    touched.push(player.id);
+  }
+
+  for (const playerId of touched) {
+    await refreshPlayerValuation(playerId);
+  }
+
+  revalidatePath(`/admin/clubs/${clubId}/matches`);
+  revalidatePublicSite();
+  redirect(`/admin/clubs/${clubId}/matches`);
+}
+
+export async function deleteAdminMatch(formData: FormData): Promise<void> {
+  await requireAdmin();
+
+  const matchId = String(formData.get("id"));
+  const clubId = String(formData.get("clubId"));
+
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: { appearances: { select: { playerId: true } } },
+  });
+  if (!match) return;
+
+  const affected = match.appearances.map((appearance) => appearance.playerId);
+  await prisma.match.delete({ where: { id: matchId } });
+
+  for (const playerId of affected) {
+    await refreshPlayerValuation(playerId);
+  }
+
+  revalidatePath(`/admin/clubs/${clubId}/matches`);
+  revalidatePublicSite();
+}
+
 // ---------------------------------------------------------------- proposals
 
 /**

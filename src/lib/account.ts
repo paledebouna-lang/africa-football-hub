@@ -16,6 +16,8 @@ export type Account = {
  */
 export async function getAccount(): Promise<Account | null> {
   const supabase = await createSupabaseServerClient();
+  if (!supabase) return null;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
