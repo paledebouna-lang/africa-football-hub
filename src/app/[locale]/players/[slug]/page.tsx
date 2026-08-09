@@ -14,6 +14,11 @@ import { PlayerPhoto, Crest, Flag } from "@/components/ui/media";
 import { HonoursList } from "@/components/honours-list";
 import { StatisticsTable } from "@/components/statistics-table";
 import { playerStatistics } from "@/lib/statistics";
+import { CommunityPanel } from "@/components/community-panel";
+import { ValueProposalForm } from "@/components/value-proposal";
+import { communityConsensus } from "@/lib/community";
+import { getAccount } from "@/lib/account";
+import { proposeValue } from "../proposal-actions";
 
 export default async function PlayerPage({
   params,
@@ -44,7 +49,11 @@ export default async function PlayerPage({
       : null;
 
   const competitions = player.club?.entries ?? [];
-  const statistics = await playerStatistics(player.id);
+  const [statistics, consensus, account] = await Promise.all([
+    playerStatistics(player.id),
+    communityConsensus(player.id),
+    getAccount(),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
@@ -155,6 +164,52 @@ export default async function PlayerPage({
           }}
         />
       )}
+
+      <section>
+        <SectionTitle>{t("community.title")}</SectionTitle>
+        <div className="space-y-3">
+          <CommunityPanel
+            consensus={consensus}
+            formatValue={(value) => formatUsdFull(value, locale)}
+            labels={{
+              consensus: t("community.consensus"),
+              votes: t.raw("community.votes") as string,
+              range: t.raw("community.range") as string,
+              counting: t("community.counting"),
+              notCounting: t.raw("community.notCounting") as string,
+              empty: t("community.empty"),
+            }}
+          />
+
+          {account ? (
+            <ValueProposalForm
+              action={proposeValue}
+              playerId={player.id}
+              playerSlug={player.slug}
+              suggestion={latest?.valueUsd ?? null}
+              labels={{
+                title: t("player.proposeValue"),
+                value: t("community.yourValue"),
+                valueHint: t("community.yourValueHint"),
+                comment: t("community.comment"),
+                commentHint: t("community.commentHint"),
+                submit: t("community.submit"),
+                pending: t("common.loading"),
+              }}
+            />
+          ) : (
+            <p className="text-sm text-muted">
+              <Link
+                href="/account/sign-in"
+                className="font-medium text-brand hover:underline"
+              >
+                {t("nav.signIn")}
+              </Link>{" "}
+              {t("community.signInToVote")}
+            </p>
+          )}
+        </div>
+      </section>
 
       {statistics.length > 0 && (
         <section>

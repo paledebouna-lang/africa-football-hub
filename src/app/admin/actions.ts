@@ -322,6 +322,32 @@ export async function deleteTransfer(formData: FormData): Promise<void> {
   revalidatePublicSite();
 }
 
+// ---------------------------------------------------------------- proposals
+
+/**
+ * Accepting or rejecting a community proposal. Accepting one changes the
+ * consensus, so the player's value is recomputed immediately — and rejecting a
+ * previously accepted one must do the same, or a withdrawn vote would keep
+ * counting.
+ */
+export async function reviewProposal(formData: FormData): Promise<void> {
+  await requireAdmin();
+
+  const id = String(formData.get("id"));
+  const decision = String(formData.get("decision"));
+  if (!["ACCEPTED", "REJECTED", "PENDING"].includes(decision)) return;
+
+  const proposal = await prisma.valueProposal.update({
+    where: { id },
+    data: { status: decision as never, reviewedAt: new Date() },
+  });
+
+  await refreshPlayerValuation(proposal.playerId);
+
+  revalidatePath("/admin/proposals");
+  revalidatePublicSite();
+}
+
 // ---------------------------------------------------------------- organisations
 
 /**

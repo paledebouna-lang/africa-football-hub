@@ -12,38 +12,41 @@ function contractIn(months: number): Date {
   return date;
 }
 
+/** A settled first-team striker, used as the reference profile for comparisons. */
+const striker: Omit<ValuationInput, "now" | "community"> = {
+  dateOfBirth: birthdayFor(24),
+  squadLevel: "FIRST_TEAM",
+  contractUntil: contractIn(30),
+  competitionStrength: 1.0,
+  nationalTeam: { level: "SENIOR", caps: 12 },
+  position: "ST",
+  performance: {
+    minutesPlayed: 2450,
+    goals: 18,
+    assists: 6,
+    clubMatches: 30,
+  },
+};
+
 const profiles: { label: string; input: Omit<ValuationInput, "now"> }[] = [
   {
-    label: "Buteur 24 ans, Al Ahly (1.00), 28 matchs, 18 buts 6 passes",
-    input: {
-      dateOfBirth: birthdayFor(24),
-      squadLevel: "FIRST_TEAM",
-      contractUntil: contractIn(30),
-      competitionStrength: 1.0,
-      nationalTeam: { level: "SENIOR", caps: 12 },
-      position: "ST",
-      performance: {
-        minutesPlayed: 2450,
-        goals: 18,
-        assists: 6,
-        clubMatches: 30,
-      },
-    },
+    label: "Buteur 24 ans, Al Ahly, 18 buts — sans vote communautaire",
+    input: { ...striker, community: null },
   },
   {
-    label: "Même buteur, mais saison blanche (aucune statistique)",
-    input: {
-      dateOfBirth: birthdayFor(24),
-      squadLevel: "FIRST_TEAM",
-      contractUntil: contractIn(30),
-      competitionStrength: 1.0,
-      nationalTeam: { level: "SENIOR", caps: 12 },
-      position: "ST",
-      performance: null,
-    },
+    label: "Même buteur — la communauté le voit bien plus haut (600 k, 8 votes)",
+    input: { ...striker, community: { consensusUsd: 600_000, voteCount: 8 } },
   },
   {
-    label: "Défenseur central 26 ans, Botola (0.95), 27 matchs, 2 buts",
+    label: "Même buteur — la communauté le voit plus bas (150 k, 8 votes)",
+    input: { ...striker, community: { consensusUsd: 150_000, voteCount: 8 } },
+  },
+  {
+    label: "Même buteur — un seul vote très haut : ignoré (seuil de 3)",
+    input: { ...striker, community: { consensusUsd: 5_000_000, voteCount: 1 } },
+  },
+  {
+    label: "Défenseur central 26 ans, Botola, saison pleine",
     input: {
       dateOfBirth: birthdayFor(26),
       squadLevel: "FIRST_TEAM",
@@ -51,33 +54,12 @@ const profiles: { label: string; input: Omit<ValuationInput, "now"> }[] = [
       competitionStrength: 0.95,
       nationalTeam: null,
       position: "CB",
-      performance: {
-        minutesPlayed: 2400,
-        goals: 2,
-        assists: 1,
-        clubMatches: 28,
-      },
+      performance: { minutesPlayed: 2400, goals: 2, assists: 1, clubMatches: 28 },
+      community: null,
     },
   },
   {
-    label: "Remplaçant 21 ans, NPFL (0.70), 400 min, 3 buts",
-    input: {
-      dateOfBirth: birthdayFor(21),
-      squadLevel: "FIRST_TEAM",
-      contractUntil: contractIn(36),
-      competitionStrength: 0.7,
-      nationalTeam: null,
-      position: "LW",
-      performance: {
-        minutesPlayed: 400,
-        goals: 3,
-        assists: 2,
-        clubMatches: 26,
-      },
-    },
-  },
-  {
-    label: "Jeune 17 ans en académie (0.30), équipe jeunes, aucune donnée",
+    label: "Jeune 17 ans en académie, aucune donnée",
     input: {
       dateOfBirth: birthdayFor(17),
       squadLevel: "YOUTH",
@@ -86,6 +68,7 @@ const profiles: { label: string; input: Omit<ValuationInput, "now"> }[] = [
       nationalTeam: null,
       position: null,
       performance: null,
+      community: null,
     },
   },
 ];

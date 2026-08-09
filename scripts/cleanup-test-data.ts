@@ -14,9 +14,14 @@ async function main() {
   // survives its match.
   const matches = await prisma.match.deleteMany({});
 
+  // Deleting a player cascades their proposals, appearances and market values.
   const players = await prisma.player.deleteMany({
     where: {
-      OR: [{ name: { contains: "Test" } }, { name: { contains: "Stats" } }],
+      OR: [
+        { name: { contains: "Test" } },
+        { name: { contains: "Stats" } },
+        { name: { contains: "Demo" } },
+      ],
     },
   });
 
@@ -28,14 +33,15 @@ async function main() {
     where: { email: { contains: ".afh" } },
   });
 
-  console.log(`Matchs supprimés        : ${matches.count}`);
-  console.log(`Joueurs supprimés       : ${players.count}`);
+  console.log(`Matchs supprimés         : ${matches.count}`);
+  console.log(`Joueurs supprimés        : ${players.count}`);
   console.log(`Organisations supprimées : ${organisations.count}`);
-  console.log(`Profils supprimés       : ${profiles.count}`);
+  console.log(`Profils supprimés        : ${profiles.count}`);
   console.log(`--- restant ---`);
   console.log(`Organisations : ${await prisma.organisation.count()}`);
   console.log(`Joueurs       : ${await prisma.player.count()}`);
   console.log(`Matchs        : ${await prisma.match.count()}`);
+  console.log(`Propositions  : ${await prisma.valueProposal.count()}`);
   console.log(`Clubs         : ${await prisma.club.count()}`);
 }
 

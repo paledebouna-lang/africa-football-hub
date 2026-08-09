@@ -146,6 +146,21 @@
     "ACADEMY": "Academy",
     "AGENCY": "Agency"
   },
+  "community": {
+    "title": "Community view",
+    "consensus": "Value proposed by the community",
+    "votes": "{count} accepted proposal(s)",
+    "range": "Proposals from {low} to {high}",
+    "counting": "This view counts towards the player's market value, for 20% of it.",
+    "notCounting": "At least {needed} accepted proposals are needed before the community affects the value.",
+    "empty": "No accepted proposal for this player yet. Be the first to give your view.",
+    "yourValue": "Your proposal (in dollars)",
+    "yourValueHint": "No symbol or spaces. One proposal per player every 30 days.",
+    "comment": "Reasoning",
+    "commentHint": "Briefly explain your estimate. A reasoned proposal is more likely to be accepted.",
+    "submit": "Send my proposal",
+    "signInToVote": "to propose a value for this player."
+  },
   "statistics": {
     "title": "Statistics",
     "appearances": "Apps",

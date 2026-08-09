@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { computeValuation } from "@/lib/valuation";
 import { performanceInputFor } from "@/lib/statistics";
+import { communityConsensus } from "@/lib/community";
 
 /**
  * Recomputes a player's value and stores it if it moved.
@@ -32,7 +33,10 @@ export async function refreshPlayerValuation(playerId: string): Promise<void> {
     player.selections[0] ??
     null;
 
-  const performance = await performanceInputFor(playerId, player.clubId);
+  const [performance, consensus] = await Promise.all([
+    performanceInputFor(playerId, player.clubId),
+    communityConsensus(playerId),
+  ]);
 
   const result = computeValuation({
     dateOfBirth: player.dateOfBirth,
@@ -44,6 +48,7 @@ export async function refreshPlayerValuation(playerId: string): Promise<void> {
       : null,
     position: player.position,
     performance,
+    community: consensus,
   });
 
   if (latest && latest.valueUsd === result.valueUsd) return;

@@ -88,8 +88,17 @@ export type ValuationInput = {
     assists: number;
     clubMatches: number;
   } | null;
+  /** Median of the accepted community proposals, once enough have been made. */
+  community: { consensusUsd: number; voteCount: number } | null;
   now?: Date;
 };
+
+/**
+ * A single opinion is not a consensus. Below this many accepted proposals the
+ * community criterion stays out of the calculation entirely, so one person
+ * cannot move a player's published value.
+ */
+export const MIN_VOTES_TO_COUNT = 3;
 
 /**
  * Goals and assists per 90 that mark an excellent season, by position. Judging a
@@ -247,8 +256,35 @@ export function computeValuation(input: ValuationInput): ValuationResult {
     });
   }
 
-  // `community` stays absent until the vote exists. Its weight is redistributed,
-  // not counted as zero.
+  // The community is scored against the value the other criteria already produce,
+  // so the vote adjusts the model rather than restating it. That needs the
+  // model's own answer first, which is why this happens in two passes — and why
+  // the community criterion can never feed on itself.
+  const withoutCommunity = finalise(base, criteria);
+
+  if (input.community && input.community.voteCount >= MIN_VOTES_TO_COUNT) {
+    const ratio = input.community.consensusUsd / Math.max(1, withoutCommunity.valueUsd);
+    criteria.push({
+      criterion: "community",
+      // Twice the model's figure is a full vote of confidence; half of it, a full
+      // vote against.
+      score: Math.max(-1, Math.min(1, ratio - 1)),
+      weight: VALUATION_WEIGHTS.community,
+      label: `${input.community.voteCount} votes`,
+    });
+
+    return finalise(base, criteria);
+  }
+
+  return withoutCommunity;
+}
+
+/**
+ * Turns a set of scored criteria into a value. Criteria that could not be
+ * computed are simply absent: their weight is redistributed across the rest
+ * rather than counted as zero, which would silently drag every estimate down.
+ */
+function finalise(base: number, criteria: CriterionScore[]): ValuationResult {
   const totalWeight = Object.values(VALUATION_WEIGHTS).reduce((a, b) => a + b, 0);
   const usedWeight = criteria.reduce((sum, item) => sum + item.weight, 0);
 

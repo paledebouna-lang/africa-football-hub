@@ -146,6 +146,21 @@
     "ACADEMY": "Centre de formation",
     "AGENCY": "Agence"
   },
+  "community": {
+    "title": "Avis de la communauté",
+    "consensus": "Valeur proposée par la communauté",
+    "votes": "{count} proposition(s) acceptée(s)",
+    "range": "Propositions de {low} à {high}",
+    "counting": "Cet avis est pris en compte dans la valeur marchande du joueur, à hauteur de 20 %.",
+    "notCounting": "Il faut au moins {needed} propositions acceptées pour que la communauté pèse sur la valeur.",
+    "empty": "Aucune proposition acceptée pour ce joueur. Sois le premier à donner ton avis.",
+    "yourValue": "Ta proposition (en dollars)",
+    "yourValueHint": "Sans symbole ni espace. Une seule proposition par joueur tous les 30 jours.",
+    "comment": "Justification",
+    "commentHint": "Explique brièvement ton évaluation. Une proposition argumentée a plus de chances d'être acceptée.",
+    "submit": "Envoyer ma proposition",
+    "signInToVote": "pour proposer une valeur pour ce joueur."
+  },
   "statistics": {
     "title": "Statistiques",
     "appearances": "Matchs",
