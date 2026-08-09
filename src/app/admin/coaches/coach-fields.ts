@@ -59,10 +59,12 @@ export function coachFields(
       hint: "Ex. « CAF A », « UEFA Pro ».",
     },
     {
-      kind: "url",
+      kind: "image",
       name: "photoUrl",
-      label: "Adresse de la photo",
-      defaultValue: defaults.photoUrl ?? "",
+      label: "Photo de l'entraîneur",
+      folder: "coaches",
+      defaultValue: defaults.photoUrl,
+      rounded: true,
     },
   ];
 }

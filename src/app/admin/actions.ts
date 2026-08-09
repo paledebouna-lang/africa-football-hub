@@ -30,29 +30,43 @@ function revalidatePublicSite() {
   revalidatePath("/", "layout");
 }
 
+type SluggedModel = "club" | "player" | "competition" | "coach";
+
+const SLUG_LOOKUP = {
+  club: (slug: string) => prisma.club.findUnique({ where: { slug } }),
+  player: (slug: string) => prisma.player.findUnique({ where: { slug } }),
+  competition: (slug: string) => prisma.competition.findUnique({ where: { slug } }),
+  coach: (slug: string) => prisma.coach.findUnique({ where: { slug } }),
+} as const;
+
 /** Slugs must be unique; append a counter when the natural slug is taken. */
-async function uniqueSlug(
-  base: string,
-  model: "club" | "player" | "competition" | "coach",
-  currentId?: string,
-): Promise<string> {
+async function uniqueSlug(base: string, model: SluggedModel): Promise<string> {
   const seed = base.length > 0 ? base : "sans-nom";
   let candidate = seed;
   let counter = 2;
 
-  const lookup = {
-    club: (slug: string) => prisma.club.findUnique({ where: { slug } }),
-    player: (slug: string) => prisma.player.findUnique({ where: { slug } }),
-    competition: (slug: string) => prisma.competition.findUnique({ where: { slug } }),
-    coach: (slug: string) => prisma.coach.findUnique({ where: { slug } }),
-  }[model];
-
   for (;;) {
-    const existing = await lookup(candidate);
-    if (!existing || existing.id === currentId) return candidate;
+    const existing = await SLUG_LOOKUP[model](candidate);
+    if (!existing) return candidate;
     candidate = `${seed}-${counter}`;
     counter += 1;
   }
+}
+
+/**
+ * A slug is assigned once and then left alone.
+ *
+ * Regenerating it on every save meant that simply correcting a club's spelling
+ * silently changed its public address, breaking every link already shared or
+ * indexed. A stable URL is worth more than a perfectly matching one.
+ */
+async function slugFor(
+  base: string,
+  model: SluggedModel,
+  existingId?: string,
+): Promise<string | undefined> {
+  if (existingId) return undefined;
+  return uniqueSlug(base, model);
 }
 
 function optionalText(value: FormDataEntryValue | null): string | null {
@@ -145,12 +159,12 @@ export async function saveClub(
     primaryCompetitionId: optionalText(formData.get("primaryCompetitionId")),
   };
 
-  const slug = await uniqueSlug(slugify(data.nameEn), "club", id ?? undefined);
+  const slug = await slugFor(slugify(data.nameEn), "club", id ?? undefined);
 
   if (id) {
-    await prisma.club.update({ where: { id }, data: { ...data, slug } });
+    await prisma.club.update({ where: { id }, data });
   } else {
-    await prisma.club.create({ data: { ...data, slug } });
+    await prisma.club.create({ data: { ...data, slug: slug! } });
   }
 
   revalidatePath("/admin/clubs");
@@ -206,11 +220,11 @@ export async function savePlayer(
     nationalityId: optionalText(formData.get("nationalityId")),
   };
 
-  const slug = await uniqueSlug(slugify(data.name), "player", id ?? undefined);
+  const slug = await slugFor(slugify(data.name), "player", id ?? undefined);
 
   const player = id
-    ? await prisma.player.update({ where: { id }, data: { ...data, slug } })
-    : await prisma.player.create({ data: { ...data, slug } });
+    ? await prisma.player.update({ where: { id }, data })
+    : await prisma.player.create({ data: { ...data, slug: slug! } });
 
   // A value typed on the form always wins over the engine: an editor who has
   // looked at the player knows more than a formula.
@@ -538,16 +552,12 @@ export async function saveCompetition(
     strengthCoefficient: Number.isFinite(strength) && strength > 0 ? strength : 1,
   };
 
-  const slug = await uniqueSlug(
-    slugify(data.nameEn),
-    "competition",
-    id ?? undefined,
-  );
+  const slug = await slugFor(slugify(data.nameEn), "competition", id ?? undefined);
 
   if (id) {
-    await prisma.competition.update({ where: { id }, data: { ...data, slug } });
+    await prisma.competition.update({ where: { id }, data });
   } else {
-    await prisma.competition.create({ data: { ...data, slug } });
+    await prisma.competition.create({ data: { ...data, slug: slug! } });
   }
 
   revalidatePath("/admin/competitions");
@@ -619,12 +629,12 @@ export async function saveCoach(
     nationalityId: optionalText(formData.get("nationalityId")),
   };
 
-  const slug = await uniqueSlug(slugify(data.name), "coach", id ?? undefined);
+  const slug = await slugFor(slugify(data.name), "coach", id ?? undefined);
 
   if (id) {
-    await prisma.coach.update({ where: { id }, data: { ...data, slug } });
+    await prisma.coach.update({ where: { id }, data });
   } else {
-    await prisma.coach.create({ data: { ...data, slug } });
+    await prisma.coach.create({ data: { ...data, slug: slug! } });
   }
 
   revalidatePath("/admin/coaches");
@@ -762,8 +772,11 @@ export async function saveSelection(
   await refreshPlayerValuation(playerId);
 
   revalidatePath(`/admin/players/${playerId}`);
+  revalidatePath(`/admin/countries/${countryId}`);
   revalidatePublicSite();
-  redirect(`/admin/players/${playerId}`);
+
+  // Selections are composed from the country page, so that is where we return.
+  redirect(`/admin/countries/${countryId}`);
 }
 
 export async function deleteSelection(formData: FormData): Promise<void> {
@@ -771,6 +784,9 @@ export async function deleteSelection(formData: FormData): Promise<void> {
   const id = String(formData.get("id"));
 
   const selection = await prisma.nationalTeamSelection.delete({ where: { id } });
+  await refreshPlayerValuation(selection.playerId);
+
   revalidatePath(`/admin/players/${selection.playerId}`);
+  revalidatePath(`/admin/countries/${selection.countryId}`);
   revalidatePublicSite();
 }

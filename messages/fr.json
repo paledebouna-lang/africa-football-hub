@@ -146,6 +146,15 @@
     "ACADEMY": "Centre de formation",
     "AGENCY": "Agence"
   },
+  "upload": {
+    "choose": "Choisir une image",
+    "working": "Envoi en cours...",
+    "remove": "Retirer",
+    "none": "Aucune",
+    "done": "Image envoyée.",
+    "failed": "L'envoi a échoué.",
+    "signInRequired": "Ta session a expiré. Reconnecte-toi pour envoyer une image."
+  },
   "community": {
     "title": "Avis de la communauté",
     "consensus": "Valeur proposée par la communauté",
@@ -228,7 +237,13 @@
     "videoUrl": "Lien de la vidéo",
     "videoUrlHint": "Colle l'adresse YouTube depuis la barre du navigateur.",
     "videoTitle": "Titre de la vidéo",
-    "addVideo": "Ajouter la vidéo"
+    "addVideo": "Ajouter la vidéo",
+    "statsFromSheets": "Calculées automatiquement à partir des feuilles de match que tu as remplies.",
+    "addTransfer": "Enregistrer un transfert",
+    "saveTransfer": "Enregistrer le transfert",
+    "removeTransfer": "Supprimer",
+    "transferDirection": "Sens du transfert",
+    "transferFee": "Montant ($)"
   },
   "organisationStatus": {
     "PENDING": "En attente",

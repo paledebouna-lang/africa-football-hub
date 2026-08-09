@@ -158,11 +158,13 @@ export function playerFields(
       defaultValue: defaults.agent ?? "",
     },
     {
-      kind: "url",
+      kind: "image",
       name: "photoUrl",
-      label: "Adresse de la photo",
-      defaultValue: defaults.photoUrl ?? "",
-      hint: "Colle ici le lien direct vers une image (https://...).",
+      label: "Photo du joueur",
+      folder: "players",
+      defaultValue: defaults.photoUrl,
+      rounded: true,
+      hint: "Depuis ton téléphone ou ton ordinateur. L'image est réduite automatiquement.",
     },
     {
       kind: "number",

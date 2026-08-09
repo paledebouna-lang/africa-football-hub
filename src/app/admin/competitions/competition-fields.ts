@@ -79,10 +79,11 @@ export function competitionFields(
       hint: "Sert à pondérer les performances. 1,00 = meilleur championnat national africain ; 1,30 pour la Ligue des Champions CAF ; 0,40 pour une deuxième division.",
     },
     {
-      kind: "url",
+      kind: "image",
       name: "logoUrl",
-      label: "Adresse du logo",
-      defaultValue: defaults.logoUrl ?? "",
+      label: "Logo de la compétition",
+      folder: "competitions",
+      defaultValue: defaults.logoUrl,
     },
   ];
 }

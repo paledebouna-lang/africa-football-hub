@@ -29,8 +29,10 @@ enum Foot {
 enum AgeCategory {
   SENIOR
   U23
+  U21
   U20
   U19
+  U18
   U17
   U15
 }

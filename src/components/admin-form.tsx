@@ -3,6 +3,20 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import type { ActionState } from "@/app/admin/actions";
+import { ImageUpload } from "@/components/image-upload";
+
+// The admin is French-only, so its upload wording lives here rather than in the
+// translation files that serve the public site.
+const UPLOAD_LABELS = {
+  choose: "Choisir une image",
+  uploading: "Envoi en cours...",
+  remove: "Retirer",
+  noImage: "Aucune",
+  done: "Image envoyée.",
+  failed: "L'envoi a échoué.",
+  signInRequired:
+    "Connecte-toi d'abord à ton compte membre (bouton « Mon compte » sur le site) : l'envoi d'images utilise cette session.",
+};
 
 export type FieldOption = { value: string; label: string };
 
@@ -37,6 +51,16 @@ export type Field =
       name: string;
       label: string;
       defaultValue?: string;
+    }
+  | {
+      kind: "image";
+      name: string;
+      label: string;
+      /** Sub-folder in the storage bucket, e.g. "clubs" or "players". */
+      folder: string;
+      defaultValue?: string | null;
+      hint?: string;
+      rounded?: boolean;
     };
 
 export function AdminForm({
@@ -78,9 +102,23 @@ export function AdminForm({
           .map((field) => (
           <div
             key={field.name}
-            className={field.kind === "checkbox" ? "sm:col-span-2" : undefined}
+            className={
+              field.kind === "checkbox" || field.kind === "image"
+                ? "sm:col-span-2"
+                : undefined
+            }
           >
-            {field.kind === "checkbox" ? (
+            {field.kind === "image" ? (
+              <ImageUpload
+                name={field.name}
+                label={field.label}
+                folder={field.folder}
+                defaultValue={field.defaultValue}
+                hint={field.hint}
+                rounded={field.rounded}
+                labels={UPLOAD_LABELS}
+              />
+            ) : field.kind === "checkbox" ? (
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"

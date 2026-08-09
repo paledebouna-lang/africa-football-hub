@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import type { OrgState } from "@/app/[locale]/account/org/actions";
+import { ImageUpload } from "@/components/image-upload";
 
 type Option = { value: string; label: string };
 
@@ -128,14 +129,25 @@ export function OrgPlayerForm({
           type="date"
           defaultValue={defaults.contractUntil ?? ""}
         />
-        <Text
-          name="photoUrl"
-          label={labels.photo}
-          type="url"
-          defaultValue={defaults.photoUrl ?? ""}
-          hint={labels.photoHint}
-        />
       </div>
+
+      <ImageUpload
+        name="photoUrl"
+        label={labels.photo}
+        folder="players"
+        defaultValue={defaults.photoUrl}
+        hint={labels.photoHint}
+        rounded
+        labels={{
+          choose: labels.uploadChoose,
+          uploading: labels.uploadWorking,
+          remove: labels.uploadRemove,
+          noImage: labels.uploadNone,
+          done: labels.uploadDone,
+          failed: labels.uploadFailed,
+          signInRequired: labels.uploadSignIn,
+        }}
+      />
 
       <p className="rounded-md bg-brand/5 p-3 text-xs text-muted">
         {labels.valuationNote}

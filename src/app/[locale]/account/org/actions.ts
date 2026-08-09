@@ -30,14 +30,18 @@ function date(value: FormDataEntryValue | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-async function uniquePlayerSlug(name: string, currentId?: string): Promise<string> {
+/**
+ * Assigned once, at creation. Renaming a player must not change their public
+ * address, or every link already shared to their profile would break.
+ */
+async function uniquePlayerSlug(name: string): Promise<string> {
   const seed = slugify(name) || "joueur";
   let candidate = seed;
   let counter = 2;
 
   for (;;) {
     const existing = await prisma.player.findUnique({ where: { slug: candidate } });
-    if (!existing || existing.id === currentId) return candidate;
+    if (!existing) return candidate;
     candidate = `${seed}-${counter}`;
     counter += 1;
   }
@@ -90,12 +94,14 @@ export async function saveOrgPlayer(
     ...(context.clubId ? { clubId: context.clubId } : {}),
   };
 
-  const slug = await uniquePlayerSlug(data.name, playerId ?? undefined);
-
   const player = playerId
-    ? await prisma.player.update({ where: { id: playerId }, data: { ...data, slug } })
+    ? await prisma.player.update({ where: { id: playerId }, data })
     : await prisma.player.create({
-        data: { ...data, slug, createdByOrganisationId: context.organisationId },
+        data: {
+          ...data,
+          slug: await uniquePlayerSlug(data.name),
+          createdByOrganisationId: context.organisationId,
+        },
       });
 
   // An agency that adds a player also records that it represents them.
@@ -110,6 +116,91 @@ export async function saveOrgPlayer(
   revalidatePath(`/fr/account/org/${context.organisationName}`);
   revalidatePath("/", "layout");
   redirect(`/fr/account/org/${parsed.data.slug}`);
+}
+
+/**
+ * Records an arrival or a departure for one of the organisation's players.
+ * The club is always one side of the move: a club cannot invent a transfer
+ * between two other clubs.
+ */
+export async function saveOrgTransfer(
+  _state: OrgState,
+  formData: FormData,
+): Promise<OrgState> {
+  const orgSlug = text(formData.get("orgSlug"));
+  const playerId = text(formData.get("playerId"));
+  if (!orgSlug || !playerId) return { error: "Joueur introuvable." };
+
+  const context = await requireOrganisation(orgSlug);
+  if (!context.clubId) {
+    return { error: "Seuls les clubs peuvent enregistrer un transfert." };
+  }
+
+  try {
+    await assertPlayerInScope(context, playerId);
+  } catch {
+    return { error: "Ce joueur ne fait pas partie de ton effectif." };
+  }
+
+  const transferDate = date(formData.get("date"));
+  if (!transferDate) return { error: "La date du transfert est obligatoire." };
+
+  const direction = text(formData.get("direction")) ?? "IN";
+  const otherClubId = text(formData.get("otherClubId"));
+
+  if (otherClubId === context.clubId) {
+    return { error: "Le club d'origine et le club d'arrivée sont identiques." };
+  }
+
+  const isArrival = direction === "IN";
+
+  await prisma.transfer.create({
+    data: {
+      playerId,
+      fromClubId: isArrival ? otherClubId : context.clubId,
+      toClubId: isArrival ? context.clubId : otherClubId,
+      seasonId: text(formData.get("seasonId")),
+      date: transferDate,
+      type: (text(formData.get("type")) ?? "PERMANENT") as never,
+      feeUsd: int(formData.get("feeUsd")),
+      isFeeUndisclosed: formData.get("isFeeUndisclosed") === "on",
+    },
+  });
+
+  // A departure moves the player out of the squad; an arrival brings them in.
+  await prisma.player.update({
+    where: { id: playerId },
+    data: { clubId: isArrival ? context.clubId : otherClubId },
+  });
+
+  await refreshPlayerValuation(playerId);
+
+  revalidatePath(`/fr/account/org/${orgSlug}/players/${playerId}`);
+  revalidatePath("/", "layout");
+  redirect(`/fr/account/org/${orgSlug}/players/${playerId}`);
+}
+
+export async function deleteOrgTransfer(formData: FormData): Promise<void> {
+  const orgSlug = String(formData.get("orgSlug"));
+  const transferId = String(formData.get("id"));
+
+  const context = await requireOrganisation(orgSlug);
+  if (!context.clubId) return;
+
+  // Only a transfer this club was part of may be removed.
+  const transfer = await prisma.transfer.findFirst({
+    where: {
+      id: transferId,
+      OR: [{ fromClubId: context.clubId }, { toClubId: context.clubId }],
+    },
+  });
+  if (!transfer) return;
+
+  await prisma.transfer.delete({ where: { id: transferId } });
+  await refreshPlayerValuation(transfer.playerId);
+
+  revalidatePath(`/fr/account/org/${orgSlug}/players/${transfer.playerId}`);
+  revalidatePath("/", "layout");
 }
 
 export async function addOrgPlayerVideo(

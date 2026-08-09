@@ -1,4 +1,13 @@
-export const AGE_CATEGORIES = ["SENIOR", "U23", "U20", "U19", "U17", "U15"] as const;
+export const AGE_CATEGORIES = [
+  "SENIOR",
+  "U23",
+  "U21",
+  "U20",
+  "U19",
+  "U18",
+  "U17",
+  "U15",
+] as const;
 export type AgeCategoryValue = (typeof AGE_CATEGORIES)[number];
 
 export const COMPETITION_TYPES = [

@@ -146,6 +146,15 @@
     "ACADEMY": "أكاديمية",
     "AGENCY": "وكالة"
   },
+  "upload": {
+    "choose": "اختر صورة",
+    "working": "جارٍ الرفع...",
+    "remove": "إزالة",
+    "none": "لا شيء",
+    "done": "تم رفع الصورة.",
+    "failed": "فشل الرفع.",
+    "signInRequired": "انتهت جلستك. سجّل الدخول مجددًا لرفع صورة."
+  },
   "community": {
     "title": "رأي المجتمع",
     "consensus": "القيمة التي يقترحها المجتمع",
@@ -228,7 +237,13 @@
     "videoUrl": "رابط الفيديو",
     "videoUrlHint": "الصق عنوان يوتيوب من شريط العناوين في المتصفح.",
     "videoTitle": "عنوان الفيديو",
-    "addVideo": "إضافة الفيديو"
+    "addVideo": "إضافة الفيديو",
+    "statsFromSheets": "تُحتسب تلقائيًا من أوراق المباريات التي ملأتها.",
+    "addTransfer": "تسجيل انتقال",
+    "saveTransfer": "حفظ الانتقال",
+    "removeTransfer": "حذف",
+    "transferDirection": "اتجاه الانتقال",
+    "transferFee": "القيمة (دولار)"
   },
   "organisationStatus": {
     "PENDING": "قيد الانتظار",

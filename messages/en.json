@@ -146,6 +146,15 @@
     "ACADEMY": "Academy",
     "AGENCY": "Agency"
   },
+  "upload": {
+    "choose": "Choose an image",
+    "working": "Uploading...",
+    "remove": "Remove",
+    "none": "None",
+    "done": "Image uploaded.",
+    "failed": "Upload failed.",
+    "signInRequired": "Your session has expired. Sign in again to upload an image."
+  },
   "community": {
     "title": "Community view",
     "consensus": "Value proposed by the community",
@@ -228,7 +237,13 @@
     "videoUrl": "Video link",
     "videoUrlHint": "Paste the YouTube address from your browser's address bar.",
     "videoTitle": "Video title",
-    "addVideo": "Add video"
+    "addVideo": "Add video",
+    "statsFromSheets": "Computed automatically from the team sheets you filled in.",
+    "addTransfer": "Record a transfer",
+    "saveTransfer": "Save transfer",
+    "removeTransfer": "Delete",
+    "transferDirection": "Transfer direction",
+    "transferFee": "Fee ($)"
   },
   "organisationStatus": {
     "PENDING": "Pending",

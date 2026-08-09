@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { AdminShell } from "@/components/admin-shell";
 import { AdminForm } from "@/components/admin-form";
 import { HonoursManager } from "@/components/honours-manager";
+import { NationalSquadsManager } from "@/components/national-squads-manager";
 import { saveCountry } from "../../actions";
 
 export default async function EditCountryPage({
@@ -61,6 +62,8 @@ export default async function EditCountryPage({
             ]}
           />
         </section>
+
+        <NationalSquadsManager countryId={country.id} countryName={country.nameFr} />
 
         <HonoursManager holder={{ kind: "countryId", id: country.id }} />
       </div>
