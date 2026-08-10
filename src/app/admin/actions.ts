@@ -32,13 +32,14 @@ function revalidatePublicSite() {
   revalidatePath("/", "layout");
 }
 
-type SluggedModel = "club" | "player" | "competition" | "coach";
+type SluggedModel = "club" | "player" | "competition" | "coach" | "country";
 
 const SLUG_LOOKUP = {
   club: (slug: string) => prisma.club.findUnique({ where: { slug } }),
   player: (slug: string) => prisma.player.findUnique({ where: { slug } }),
   competition: (slug: string) => prisma.competition.findUnique({ where: { slug } }),
   coach: (slug: string) => prisma.coach.findUnique({ where: { slug } }),
+  country: (slug: string) => prisma.country.findUnique({ where: { slug } }),
 } as const;
 
 /** Slugs must be unique; append a counter when the natural slug is taken. */
@@ -599,6 +600,12 @@ const countrySchema = z.object({
   nameFr: z.string().trim().min(1, "Le nom en français est obligatoire."),
   nameEn: z.string().trim().min(1, "Le nom en anglais est obligatoire."),
   nameAr: z.string().trim().min(1, "Le nom en arabe est obligatoire."),
+  code: z
+    .string()
+    .trim()
+    .min(2, "Le code du pays est obligatoire (ex. CIV, SEN).")
+    .max(5, "Le code doit faire au plus 5 caractères.")
+    .transform((value) => value.toUpperCase()),
 });
 
 export async function saveCountry(
@@ -608,24 +615,35 @@ export async function saveCountry(
   await requireAdmin();
 
   const id = optionalText(formData.get("id"));
-  if (!id) return { error: "Pays introuvable." };
 
   const parsed = countrySchema.safeParse({
     nameFr: formData.get("nameFr"),
     nameEn: formData.get("nameEn"),
     nameAr: formData.get("nameAr"),
+    code: formData.get("code"),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
 
-  await prisma.country.update({
-    where: { id },
-    data: { ...parsed.data, flagUrl: optionalText(formData.get("flagUrl")) },
+  const existingCode = await prisma.country.findUnique({
+    where: { code: parsed.data.code },
   });
+  if (existingCode && existingCode.id !== id) {
+    return { error: `Le code « ${parsed.data.code} » est déjà utilisé.` };
+  }
 
-  revalidatePath(`/admin/countries/${id}`);
+  const data = { ...parsed.data, flagUrl: optionalText(formData.get("flagUrl")) };
+
+  const country = id
+    ? await prisma.country.update({ where: { id }, data })
+    : await prisma.country.create({
+        data: { ...data, slug: await uniqueSlug(slugify(data.nameFr), "country") },
+      });
+
+  revalidatePath(`/admin/countries/${country.id}`);
+  revalidatePath("/admin/countries");
   revalidatePublicSite();
   redirect("/admin/countries");
 }

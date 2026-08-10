@@ -18,7 +18,17 @@ export default async function AdminCountriesPage() {
   });
 
   return (
-    <AdminShell title="Pays et sélections nationales">
+    <AdminShell
+      title="Pays et sélections nationales"
+      action={
+        <Link
+          href="/admin/countries/new"
+          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong transition-colors"
+        >
+          Ajouter un pays
+        </Link>
+      }
+    >
       <p className="mb-4 text-sm text-muted">
         Le palmarès d&apos;une sélection nationale se gère depuis la fiche de son
         pays.

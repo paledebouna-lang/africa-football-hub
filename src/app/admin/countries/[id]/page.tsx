@@ -7,6 +7,7 @@ import { AdminForm } from "@/components/admin-form";
 import { HonoursManager } from "@/components/honours-manager";
 import { NationalSquadsManager } from "@/components/national-squads-manager";
 import { saveCountry } from "../../actions";
+import { countryFields } from "../country-fields";
 
 export default async function EditCountryPage({
   params,
@@ -41,36 +42,7 @@ export default async function EditCountryPage({
             id={country.id}
             cancelHref="/admin/countries"
             submitLabel="Enregistrer"
-            fields={[
-              {
-                kind: "text",
-                name: "nameFr",
-                label: "Nom (français)",
-                required: true,
-                defaultValue: country.nameFr,
-              },
-              {
-                kind: "text",
-                name: "nameEn",
-                label: "Nom (anglais)",
-                required: true,
-                defaultValue: country.nameEn,
-              },
-              {
-                kind: "text",
-                name: "nameAr",
-                label: "Nom (arabe)",
-                required: true,
-                defaultValue: country.nameAr,
-              },
-              {
-                kind: "url",
-                name: "flagUrl",
-                label: "Adresse du drapeau",
-                defaultValue: country.flagUrl ?? "",
-                hint: "Lien direct vers une image du drapeau.",
-              },
-            ]}
+            fields={countryFields(country)}
           />
         </section>
 
