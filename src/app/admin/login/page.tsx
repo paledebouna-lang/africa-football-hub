@@ -1,21 +1,16 @@
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import { LoginForm } from "./login-form";
 
+/**
+ * The administration screen has no login form of its own anymore — it's
+ * merged into the member sign-in page, with a toggle for the admin
+ * credentials, so there is a single visible entry point for everyone.
+ * Every admin page still redirects here when unauthenticated; this just
+ * forwards on to the real form.
+ */
 export default async function AdminLoginPage() {
   if (await isAdminAuthenticated()) {
     redirect("/admin");
   }
-
-  return (
-    <div className="flex-1 flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-6">
-        <h1 className="text-xl font-semibold">Administration</h1>
-        <p className="mt-1 text-sm text-muted">
-          Saisis le mot de passe d&apos;administration pour continuer.
-        </p>
-        <LoginForm />
-      </div>
-    </div>
-  );
+  redirect("/fr/account/sign-in?admin=1");
 }

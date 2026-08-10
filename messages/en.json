@@ -23,7 +23,9 @@
     "leagues": "Leagues",
     "browseLeagues": "Browse leagues",
     "viewAll": "View all",
-    "emptyState": "No data yet."
+    "emptyState": "No data yet.",
+    "matchesToday": "Today's matches",
+    "noMatchesToday": "No matches scheduled today."
   },
   "league": {
     "clubs": "Clubs",
@@ -109,6 +111,10 @@
     "title": "My account",
     "signInTitle": "Sign in",
     "signInIntro": "Access your club's or agency's workspace.",
+    "adminSignInTitle": "Admin sign in",
+    "adminSignInIntro": "Reserved for the site administrator.",
+    "adminSignInToggle": "Are you the site administrator? Admin sign in",
+    "backToMemberSignIn": "← Club or agency sign in",
     "signUpTitle": "Create an account",
     "signUpIntro": "An account lets clubs, academies and agencies manage their players.",
     "fullName": "Full name",
@@ -200,6 +206,8 @@
     "ownScore": "Your club's goals",
     "opponentScore": "Opponent's goals",
     "matchday": "Matchday",
+    "matchdayShort": "MD{matchday}",
+    "upcoming": "Upcoming",
     "save": "Save match",
     "saveSheet": "Save team sheet",
     "starter": "Started",
@@ -337,7 +345,36 @@
     "allTypes": "All types",
     "noClubs": "No clubs entered for this season.",
     "continental": "Continental competition",
-    "strength": "Level"
+    "strength": "Level",
+    "selectionsEngaged": "Participating national teams",
+    "noSelections": "No national teams entered for this season."
+  },
+  "standings": {
+    "title": "Standings",
+    "group": "Group {group}",
+    "team": "Team",
+    "played": "P",
+    "won": "W",
+    "drawn": "D",
+    "lost": "L",
+    "goalsFor": "GF",
+    "goalsAgainst": "GA",
+    "goalDifference": "GD",
+    "points": "Pts"
+  },
+  "topScorers": {
+    "title": "Top scorers"
+  },
+  "performanceRadar": {
+    "title": "Performance radar",
+    "axis": {
+      "performance": "Performance",
+      "age": "Age",
+      "clubLevel": "Club level",
+      "community": "Community",
+      "contract": "Contract",
+      "nationalTeam": "Caps"
+    }
   },
   "competitionType": {
     "LEAGUE": "League",
@@ -350,8 +387,10 @@
   "ageCategory": {
     "SENIOR": "Senior",
     "U23": "Under-23",
+    "U21": "Under-21",
     "U20": "Under-20",
     "U19": "Under-19",
+    "U18": "Under-18",
     "U17": "Under-17",
     "U15": "Under-15"
   },

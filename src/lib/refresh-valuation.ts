@@ -1,7 +1,50 @@
 import { prisma } from "@/lib/prisma";
-import { computeValuation } from "@/lib/valuation";
+import { computeValuation, type ValuationResult } from "@/lib/valuation";
 import { performanceInputFor } from "@/lib/statistics";
 import { communityConsensus } from "@/lib/community";
+
+/**
+ * Computes what the model would say about a player right now, regardless of
+ * whether the value actually on display is this figure or a manually-set
+ * one. Shared by refreshPlayerValuation (which decides whether to store it)
+ * and the player page (which shows the criteria breakdown and radar even
+ * for manually-priced players — the insight is useful either way).
+ */
+export async function computeLiveValuation(
+  playerId: string,
+): Promise<ValuationResult | null> {
+  const player = await prisma.player.findUnique({
+    where: { id: playerId },
+    include: {
+      club: { include: { primaryCompetition: true } },
+      selections: { orderBy: { caps: "desc" } },
+    },
+  });
+  if (!player) return null;
+
+  const bestSelection =
+    player.selections.find((selection) => selection.level === "SENIOR") ??
+    player.selections[0] ??
+    null;
+
+  const [performance, consensus] = await Promise.all([
+    performanceInputFor(playerId, player.clubId),
+    communityConsensus(playerId),
+  ]);
+
+  return computeValuation({
+    dateOfBirth: player.dateOfBirth,
+    squadLevel: player.squadLevel,
+    contractUntil: player.contractUntil,
+    competitionStrength: player.club?.primaryCompetition?.strengthCoefficient ?? null,
+    nationalTeam: bestSelection
+      ? { level: bestSelection.level, caps: bestSelection.caps }
+      : null,
+    position: player.position,
+    performance,
+    community: consensus,
+  });
+}
 
 /**
  * Recomputes a player's value and stores it if it moved.
@@ -14,42 +57,14 @@ import { communityConsensus } from "@/lib/community";
  * knows more than the formula.
  */
 export async function refreshPlayerValuation(playerId: string): Promise<void> {
-  const player = await prisma.player.findUnique({
-    where: { id: playerId },
-    include: {
-      club: { include: { primaryCompetition: true } },
-      selections: { orderBy: { caps: "desc" } },
-      marketValues: { orderBy: { effectiveAt: "desc" }, take: 1 },
-    },
+  const latest = await prisma.marketValue.findFirst({
+    where: { playerId },
+    orderBy: { effectiveAt: "desc" },
   });
-  if (!player) return;
-
-  const latest = player.marketValues[0];
   if (latest?.source === "MANUAL") return;
 
-  // Senior caps outrank youth ones regardless of how many were won.
-  const bestSelection =
-    player.selections.find((selection) => selection.level === "SENIOR") ??
-    player.selections[0] ??
-    null;
-
-  const [performance, consensus] = await Promise.all([
-    performanceInputFor(playerId, player.clubId),
-    communityConsensus(playerId),
-  ]);
-
-  const result = computeValuation({
-    dateOfBirth: player.dateOfBirth,
-    squadLevel: player.squadLevel,
-    contractUntil: player.contractUntil,
-    competitionStrength: player.club?.primaryCompetition?.strengthCoefficient ?? null,
-    nationalTeam: bestSelection
-      ? { level: bestSelection.level, caps: bestSelection.caps }
-      : null,
-    position: player.position,
-    performance,
-    community: consensus,
-  });
+  const result = await computeLiveValuation(playerId);
+  if (!result) return;
 
   if (latest && latest.valueUsd === result.valueUsd) return;
 

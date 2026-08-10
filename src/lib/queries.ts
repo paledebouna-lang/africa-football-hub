@@ -69,6 +69,10 @@ export async function getCompetitionBySlug(slug: string) {
           },
         },
       },
+      nationalTeamEntries: {
+        where: season ? { seasonId: season.id } : undefined,
+        include: { country: true },
+      },
     },
   });
 }

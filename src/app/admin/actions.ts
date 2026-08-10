@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 import { youtubeVideoId } from "@/lib/youtube";
 import { refreshPlayerValuation } from "@/lib/refresh-valuation";
+import { sendMail } from "@/lib/mailer";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   verifyPassword,
   startAdminSession,
@@ -18,7 +20,7 @@ export type ActionState = { error?: string } | undefined;
 
 async function requireAdmin() {
   if (!(await isAdminAuthenticated())) {
-    redirect("/admin/login");
+    redirect("/fr/account/sign-in?admin=1");
   }
 }
 
@@ -88,6 +90,46 @@ function optionalDate(value: FormDataEntryValue | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+/**
+ * Image upload for the back office. The admin has no Supabase Auth session
+ * (it authenticates via ADMIN_PASSWORD, not a member account), so it cannot
+ * satisfy the storage bucket's "authenticated" RLS policy the way a club or
+ * agency upload does. This runs server-side under requireAdmin() instead,
+ * using the service-role client to bypass RLS directly.
+ */
+export async function adminUploadImage(
+  formData: FormData,
+): Promise<{ url?: string; error?: string }> {
+  await requireAdmin();
+
+  const file = formData.get("file");
+  if (!(file instanceof Blob) || file.size === 0) {
+    return { error: "Aucun fichier reçu." };
+  }
+
+  const folder = optionalText(formData.get("folder")) ?? "misc";
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) {
+    return {
+      error:
+        "Envoi d'image indisponible : SUPABASE_SERVICE_ROLE_KEY n'est pas configurée.",
+    };
+  }
+
+  const path = `${folder}/${crypto.randomUUID()}.jpg`;
+  const bytes = Buffer.from(await file.arrayBuffer());
+
+  const { error } = await admin.storage
+    .from("media")
+    .upload(path, bytes, { contentType: "image/jpeg", upsert: false });
+
+  if (error) return { error: error.message };
+
+  const { data } = admin.storage.from("media").getPublicUrl(path);
+  return { url: data.publicUrl };
+}
+
 // ---------------------------------------------------------------- auth
 
 export async function login(
@@ -106,7 +148,7 @@ export async function login(
 
 export async function logout(): Promise<void> {
   await endAdminSession();
-  redirect("/admin/login");
+  redirect("/fr/account/sign-in?admin=1");
 }
 
 // ---------------------------------------------------------------- clubs
@@ -512,14 +554,35 @@ export async function reviewOrganisation(formData: FormData): Promise<void> {
 
   if (!["APPROVED", "REJECTED", "SUSPENDED", "PENDING"].includes(decision)) return;
 
-  await prisma.organisation.update({
+  const reviewNote = optionalText(formData.get("reviewNote"));
+
+  const organisation = await prisma.organisation.update({
     where: { id },
     data: {
       status: decision as never,
       reviewedAt: new Date(),
-      reviewNote: optionalText(formData.get("reviewNote")),
+      reviewNote,
     },
   });
+
+  if (decision === "APPROVED" || decision === "REJECTED") {
+    await sendMail({
+      to: organisation.email,
+      subject:
+        decision === "APPROVED"
+          ? `Ta demande a été validée — ${organisation.name}`
+          : `Ta demande n'a pas été retenue — ${organisation.name}`,
+      text: [
+        decision === "APPROVED"
+          ? `Bonne nouvelle : la demande pour « ${organisation.name} » a été validée. Tu peux maintenant gérer ses joueurs depuis ton compte.`
+          : `La demande pour « ${organisation.name} » n'a pas été retenue.`,
+        reviewNote ? `\nMotif : ${reviewNote}` : null,
+        `\n${process.env.NEXT_PUBLIC_SITE_URL}/fr/account`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    });
+  }
 
   revalidatePath("/admin/organisations");
   revalidatePublicSite();
@@ -734,6 +797,222 @@ export async function toggleClubEntry(formData: FormData): Promise<void> {
   }
 
   revalidatePath(`/admin/competitions/${competitionId}/clubs`);
+  revalidatePublicSite();
+}
+
+/** Assigns or clears which pool a club sits in, e.g. "A", "B", "Nord". */
+export async function setClubEntryGroup(formData: FormData): Promise<void> {
+  await requireAdmin();
+
+  const competitionId = String(formData.get("competitionId"));
+  const clubId = String(formData.get("clubId"));
+  const seasonId = String(formData.get("seasonId"));
+  const group = optionalText(formData.get("group"));
+
+  await prisma.clubCompetition.updateMany({
+    where: { clubId, competitionId, seasonId },
+    data: { group },
+  });
+
+  revalidatePath(`/admin/competitions/${competitionId}/clubs`);
+  revalidatePublicSite();
+}
+
+// ---------------------------------------------------------------- national team competitions
+
+export async function toggleNationalTeamEntry(formData: FormData): Promise<void> {
+  await requireAdmin();
+
+  const competitionId = String(formData.get("competitionId"));
+  const countryId = String(formData.get("countryId"));
+  const seasonId = String(formData.get("seasonId"));
+  const shouldEnter = formData.get("enter") === "1";
+
+  if (shouldEnter) {
+    await prisma.nationalTeamEntry.upsert({
+      where: {
+        countryId_competitionId_seasonId: { countryId, competitionId, seasonId },
+      },
+      update: {},
+      create: { countryId, competitionId, seasonId },
+    });
+  } else {
+    await prisma.nationalTeamEntry.deleteMany({
+      where: { countryId, competitionId, seasonId },
+    });
+  }
+
+  revalidatePath(`/admin/competitions/${competitionId}/countries`);
+  revalidatePublicSite();
+}
+
+export async function setNationalTeamEntryGroup(formData: FormData): Promise<void> {
+  await requireAdmin();
+
+  const competitionId = String(formData.get("competitionId"));
+  const countryId = String(formData.get("countryId"));
+  const seasonId = String(formData.get("seasonId"));
+  const group = optionalText(formData.get("group"));
+
+  await prisma.nationalTeamEntry.updateMany({
+    where: { countryId, competitionId, seasonId },
+    data: { group },
+  });
+
+  revalidatePath(`/admin/competitions/${competitionId}/countries`);
+  revalidatePublicSite();
+}
+
+export async function saveNationalTeamMatch(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const countryId = optionalText(formData.get("countryId"));
+  const opponentId = optionalText(formData.get("opponentId"));
+  const competitionId = optionalText(formData.get("competitionId"));
+  const seasonId = optionalText(formData.get("seasonId"));
+  const matchDate = optionalDate(formData.get("date"));
+
+  if (!countryId || !opponentId || !competitionId || !seasonId || !matchDate) {
+    return {
+      error: "L'adversaire, la compétition, la saison et la date sont obligatoires.",
+    };
+  }
+  if (countryId === opponentId) {
+    return { error: "Une sélection ne peut pas jouer contre elle-même." };
+  }
+
+  const isHome = optionalText(formData.get("isHome")) === "1";
+  const ownScore = optionalInt(formData.get("ownScore"));
+  const opponentScore = optionalInt(formData.get("opponentScore"));
+
+  const match = await prisma.nationalTeamMatch.create({
+    data: {
+      competitionId,
+      seasonId,
+      date: matchDate,
+      homeCountryId: isHome ? countryId : opponentId,
+      awayCountryId: isHome ? opponentId : countryId,
+      homeScore: isHome ? ownScore : opponentScore,
+      awayScore: isHome ? opponentScore : ownScore,
+      ageCategory: (optionalText(formData.get("ageCategory")) ?? "SENIOR") as never,
+      venue: optionalText(formData.get("venue")),
+      matchday: optionalInt(formData.get("matchday")),
+    },
+  });
+
+  revalidatePath(`/admin/countries/${countryId}/matches`);
+  revalidatePublicSite();
+  redirect(`/admin/countries/${countryId}/matches/${match.id}`);
+}
+
+/**
+ * Records one country's half of a national-team sheet. Also keeps the
+ * player's NationalTeamSelection caps/goals in sync, so the manually-tracked
+ * career totals reflect real match sheets once they exist.
+ */
+export async function saveNationalTeamSheet(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const matchId = optionalText(formData.get("matchId"));
+  const countryId = optionalText(formData.get("countryId"));
+  if (!matchId || !countryId) return { error: "Match introuvable." };
+
+  const match = await prisma.nationalTeamMatch.findUnique({ where: { id: matchId } });
+  if (!match) return { error: "Match introuvable." };
+
+  const level = (optionalText(formData.get("ageCategory")) ?? match.ageCategory) as never;
+
+  // The pool of eligible players is whoever is currently selected at this
+  // level for this country — the sheet cannot include a player nobody called up.
+  const selections = await prisma.nationalTeamSelection.findMany({
+    where: { countryId, level, isCurrent: true },
+    select: { playerId: true },
+  });
+
+  const touched: string[] = [];
+
+  for (const { playerId } of selections) {
+    const played = formData.get(`played_${playerId}`) === "on";
+
+    if (!played) {
+      const removed = await prisma.nationalTeamMatchAppearance.deleteMany({
+        where: { matchId, playerId },
+      });
+      if (removed.count > 0) touched.push(playerId);
+      continue;
+    }
+
+    const goals = Math.max(0, optionalInt(formData.get(`goals_${playerId}`)) ?? 0);
+    const data = {
+      countryId,
+      isStarter: formData.get(`starter_${playerId}`) === "on",
+      minutesPlayed: Math.max(
+        0,
+        Math.min(120, optionalInt(formData.get(`minutes_${playerId}`)) ?? 0),
+      ),
+      goals,
+      assists: Math.max(0, optionalInt(formData.get(`assists_${playerId}`)) ?? 0),
+      yellowCards: Math.max(
+        0,
+        Math.min(2, optionalInt(formData.get(`yellow_${playerId}`)) ?? 0),
+      ),
+      redCards: Math.max(
+        0,
+        Math.min(1, optionalInt(formData.get(`red_${playerId}`)) ?? 0),
+      ),
+      cleanSheet: formData.get(`clean_${playerId}`) === "on",
+    };
+
+    await prisma.nationalTeamMatchAppearance.upsert({
+      where: { matchId_playerId: { matchId, playerId } },
+      update: data,
+      create: { matchId, playerId, ...data },
+    });
+    touched.push(playerId);
+
+    // The player's international career total grows by exactly one cap and
+    // whatever they scored — a real appearance always counts.
+    await prisma.nationalTeamSelection.updateMany({
+      where: { playerId, countryId, level },
+      data: { caps: { increment: 1 }, goals: { increment: goals } },
+    });
+  }
+
+  for (const playerId of touched) {
+    await refreshPlayerValuation(playerId);
+  }
+
+  revalidatePath(`/admin/countries/${countryId}/matches`);
+  revalidatePublicSite();
+  redirect(`/admin/countries/${countryId}/matches`);
+}
+
+export async function deleteNationalTeamMatch(formData: FormData): Promise<void> {
+  await requireAdmin();
+
+  const matchId = String(formData.get("id"));
+  const countryId = String(formData.get("countryId"));
+
+  const match = await prisma.nationalTeamMatch.findUnique({
+    where: { id: matchId },
+    include: { appearances: { select: { playerId: true } } },
+  });
+  if (!match) return;
+
+  const affected = match.appearances.map((appearance) => appearance.playerId);
+  await prisma.nationalTeamMatch.delete({ where: { id: matchId } });
+
+  for (const playerId of affected) {
+    await refreshPlayerValuation(playerId);
+  }
+
+  revalidatePath(`/admin/countries/${countryId}/matches`);
   revalidatePublicSite();
 }
 

@@ -8,6 +8,13 @@ import { slugify } from "@/lib/slug";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { missingConfigMessage } from "@/lib/supabase/config";
 import { getAccount } from "@/lib/account";
+import { sendMail, adminNotificationEmail } from "@/lib/mailer";
+
+const ORGANISATION_TYPE_LABELS: Record<string, string> = {
+  CLUB: "Club",
+  ACADEMY: "Centre de formation",
+  AGENCY: "Agence",
+};
 
 export type AuthState = { error?: string; notice?: string } | undefined;
 
@@ -162,5 +169,27 @@ export async function registerOrganisation(
 
   revalidatePath("/fr/account");
   revalidatePath("/admin/organisations");
+
+  const notifyEmail = adminNotificationEmail();
+  if (notifyEmail) {
+    await sendMail({
+      to: notifyEmail,
+      subject: `Nouvelle demande — ${organisation.name}`,
+      text: [
+        `Une nouvelle demande d'inscription attend ta validation.`,
+        ``,
+        `Organisation : ${organisation.name}`,
+        `Type : ${ORGANISATION_TYPE_LABELS[organisation.type] ?? organisation.type}`,
+        `Email de contact : ${organisation.email}`,
+        organisation.country ? `Pays : ${organisation.country}` : null,
+        organisation.claimNote ? `Note du demandeur : ${organisation.claimNote}` : null,
+        ``,
+        `À valider ici : ${process.env.NEXT_PUBLIC_SITE_URL}/admin/organisations`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    });
+  }
+
   redirect(`/fr/account?created=${organisation.slug}`);
 }

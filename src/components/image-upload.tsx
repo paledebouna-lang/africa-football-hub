@@ -51,6 +51,7 @@ export function ImageUpload({
   hint,
   labels,
   rounded = false,
+  action,
 }: {
   name: string;
   label: string;
@@ -60,6 +61,12 @@ export function ImageUpload({
   hint?: string;
   labels: Record<string, string>;
   rounded?: boolean;
+  /**
+   * When set, the resized image is posted to this server action instead of
+   * uploaded directly from the browser — used by the admin panel, which has
+   * no Supabase Auth session to satisfy the storage bucket's RLS policy.
+   */
+  action?: (formData: FormData) => Promise<{ url?: string; error?: string }>;
 }) {
   const [url, setUrl] = useState(defaultValue ?? "");
   const [status, setStatus] = useState<"idle" | "working" | "error">("idle");
@@ -71,6 +78,26 @@ export function ImageUpload({
     setMessage(null);
 
     try {
+      const blob = await shrink(file);
+
+      if (action) {
+        const body = new FormData();
+        body.set("file", blob, "image.jpg");
+        body.set("folder", folder);
+        const result = await action(body);
+
+        if (result.error || !result.url) {
+          setStatus("error");
+          setMessage(result.error ?? labels.failed);
+          return;
+        }
+
+        setUrl(result.url);
+        setStatus("idle");
+        setMessage(labels.done);
+        return;
+      }
+
       const supabase = createSupabaseBrowserClient();
       if (!supabase) {
         setStatus("error");
@@ -78,7 +105,6 @@ export function ImageUpload({
         return;
       }
 
-      const blob = await shrink(file);
       const path = `${folder}/${crypto.randomUUID()}.jpg`;
       const { error } = await supabase.storage
         .from("media")

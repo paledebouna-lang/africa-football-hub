@@ -3,9 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { AdminShell } from "@/components/admin-shell";
-import { toggleClubEntry, setClubEntryGroup } from "../../../actions";
+import { toggleNationalTeamEntry, setNationalTeamEntryGroup } from "../../../actions";
 
-export default async function CompetitionClubsPage({
+export default async function CompetitionCountriesPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -15,14 +15,10 @@ export default async function CompetitionClubsPage({
   }
 
   const { id } = await params;
-  const [competition, season, clubs] = await Promise.all([
-    prisma.competition.findUnique({ where: { id }, include: { country: true } }),
+  const [competition, season, countries] = await Promise.all([
+    prisma.competition.findUnique({ where: { id } }),
     prisma.season.findFirst({ where: { isCurrent: true } }),
-    prisma.club.findMany({
-      where: { type: "CLUB" },
-      orderBy: { nameFr: "asc" },
-      include: { primaryCompetition: { include: { country: true } } },
-    }),
+    prisma.country.findMany({ orderBy: { nameFr: "asc" } }),
   ]);
 
   if (!competition) notFound();
@@ -32,22 +28,22 @@ export default async function CompetitionClubsPage({
       <AdminShell title={competition.nameFr}>
         <p className="text-sm text-muted">
           Aucune saison courante n&apos;est définie. Impossible d&apos;engager des
-          clubs.
+          sélections.
         </p>
       </AdminShell>
     );
   }
 
-  const entries = await prisma.clubCompetition.findMany({
+  const entries = await prisma.nationalTeamEntry.findMany({
     where: { competitionId: id, seasonId: season.id },
-    select: { clubId: true, group: true },
+    select: { countryId: true, group: true },
   });
-  const enteredMap = new Map(entries.map((entry) => [entry.clubId, entry.group]));
+  const enteredMap = new Map(entries.map((entry) => [entry.countryId, entry.group]));
   const groupsInUse = [...new Set(entries.map((e) => e.group).filter(Boolean))].sort();
 
   return (
     <AdminShell
-      title={`Clubs engagés — ${competition.nameFr}`}
+      title={`Sélections engagées — ${competition.nameFr}`}
       action={
         <Link
           href="/admin/competitions"
@@ -58,8 +54,8 @@ export default async function CompetitionClubsPage({
       }
     >
       <p className="mb-4 text-sm text-muted">
-        Saison <strong>{season.label}</strong> · {enteredMap.size} club
-        {enteredMap.size > 1 ? "s" : ""} engagé{enteredMap.size > 1 ? "s" : ""}
+        Saison <strong>{season.label}</strong> · {enteredMap.size} sélection
+        {enteredMap.size > 1 ? "s" : ""} engagée{enteredMap.size > 1 ? "s" : ""}
         {groupsInUse.length > 0 && (
           <>
             {" "}
@@ -68,46 +64,41 @@ export default async function CompetitionClubsPage({
         )}
       </p>
       <p className="mb-4 text-xs text-muted">
-        La poule est un texte libre (« A », « B », « Nord »...). Laisse vide pour un
-        championnat sans phase de groupes ; le classement affiche alors un seul
-        tableau.
+        Ex. pour la CAN : Groupe A, Groupe B... Les matchs se saisissent ensuite
+        depuis la fiche du pays.
       </p>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
           <thead className="border-b border-border text-muted">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">Club</th>
-              <th className="px-4 py-3 text-left font-medium">Championnat</th>
+              <th className="px-4 py-3 text-left font-medium">Pays</th>
               <th className="px-4 py-3 text-left font-medium">Poule</th>
               <th className="px-4 py-3 text-right font-medium">Engagement</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {clubs.map((club) => {
-              const isEntered = enteredMap.has(club.id);
-              const group = enteredMap.get(club.id) ?? "";
+            {countries.map((country) => {
+              const isEntered = enteredMap.has(country.id);
+              const group = enteredMap.get(country.id) ?? "";
 
               return (
-                <tr key={club.id} className={isEntered ? "bg-brand/5" : undefined}>
-                  <td className="px-4 py-3 font-medium">{club.nameFr}</td>
-                  <td className="px-4 py-3 text-muted">
-                    {club.primaryCompetition?.nameFr ?? "—"}
-                  </td>
+                <tr key={country.id} className={isEntered ? "bg-brand/5" : undefined}>
+                  <td className="px-4 py-3 font-medium">{country.nameFr}</td>
                   <td className="px-4 py-3">
                     {isEntered ? (
                       <form
-                        action={setClubEntryGroup}
+                        action={setNationalTeamEntryGroup}
                         className="flex items-center gap-2"
                       >
                         <input type="hidden" name="competitionId" value={competition.id} />
-                        <input type="hidden" name="clubId" value={club.id} />
+                        <input type="hidden" name="countryId" value={country.id} />
                         <input type="hidden" name="seasonId" value={season.id} />
                         <input
                           name="group"
                           defaultValue={group}
                           placeholder="Aucune"
-                          className="w-24 rounded-md border border-border bg-background px-2 py-1 text-sm"
+                          className="w-28 rounded-md border border-border bg-background px-2 py-1 text-sm"
                         />
                         <button
                           type="submit"
@@ -121,9 +112,9 @@ export default async function CompetitionClubsPage({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <form action={toggleClubEntry} className="flex justify-end">
+                    <form action={toggleNationalTeamEntry} className="flex justify-end">
                       <input type="hidden" name="competitionId" value={competition.id} />
-                      <input type="hidden" name="clubId" value={club.id} />
+                      <input type="hidden" name="countryId" value={country.id} />
                       <input type="hidden" name="seasonId" value={season.id} />
                       <input type="hidden" name="enter" value={isEntered ? "0" : "1"} />
                       <button

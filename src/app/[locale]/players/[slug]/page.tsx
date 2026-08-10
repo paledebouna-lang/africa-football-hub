@@ -8,6 +8,7 @@ import { getPlayerBySlug } from "@/lib/queries";
 import { ValueChart } from "@/components/value-chart";
 import { VideoGallery } from "@/components/video-gallery";
 import { ValuationBreakdown, type Breakdown } from "@/components/valuation-breakdown";
+import { PerformanceRadar } from "@/components/performance-radar";
 import { ProfileHeader, Badge, DataGrid, DataPoint } from "@/components/profile-header";
 import { DataTable, SectionTitle } from "@/components/data-table";
 import { PlayerPhoto, Crest, Flag } from "@/components/ui/media";
@@ -18,6 +19,7 @@ import { CommunityPanel } from "@/components/community-panel";
 import { ValueProposalForm } from "@/components/value-proposal";
 import { communityConsensus } from "@/lib/community";
 import { getAccount } from "@/lib/account";
+import { computeLiveValuation } from "@/lib/refresh-valuation";
 import { proposeValue } from "../proposal-actions";
 
 export default async function PlayerPage({
@@ -39,21 +41,21 @@ export default async function PlayerPage({
       ? player.marketValues[player.marketValues.length - 1]
       : null;
 
-  // `breakdown` is stored as JSON, so it is validated rather than trusted.
-  const breakdown =
-    latest?.source === "ALGORITHM" &&
-    latest.breakdown !== null &&
-    typeof latest.breakdown === "object" &&
-    "criteria" in latest.breakdown
-      ? (latest.breakdown as unknown as Breakdown)
-      : null;
-
   const competitions = player.club?.entries ?? [];
-  const [statistics, consensus, account] = await Promise.all([
+  const [statistics, consensus, account, liveValuation] = await Promise.all([
     playerStatistics(player.id),
     communityConsensus(player.id),
     getAccount(),
+    computeLiveValuation(player.id),
   ]);
+
+  // Computed live, independent of whether the displayed figure is manual or
+  // algorithmic — the criteria breakdown and radar are useful either way.
+  const breakdown: Breakdown | null =
+    liveValuation && liveValuation.criteria.length > 0
+      ? { baseUsd: liveValuation.baseUsd, criteria: liveValuation.criteria }
+      : null;
+  const confidence = liveValuation?.confidence ?? 0;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
@@ -147,10 +149,23 @@ export default async function PlayerPage({
         </DataPoint>
       </DataGrid>
 
-      {breakdown && latest && (
+      {breakdown && (
+        <section>
+          <SectionTitle>{t("performanceRadar.title")}</SectionTitle>
+          <div className="rounded-lg border border-border bg-surface p-4">
+            <PerformanceRadar
+              criteria={breakdown.criteria}
+              axisLabel={(criterion) => t(`performanceRadar.axis.${criterion}`)}
+              title={t("performanceRadar.title")}
+            />
+          </div>
+        </section>
+      )}
+
+      {breakdown && (
         <ValuationBreakdown
           breakdown={breakdown}
-          confidence={latest.confidence ?? 0}
+          confidence={confidence}
           formatValue={(value) => formatUsdFull(value, locale)}
           criterionLabel={(criterion) => t(`valuationCriterion.${criterion}`)}
           labels={{

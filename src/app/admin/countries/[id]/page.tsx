@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -21,7 +22,17 @@ export default async function EditCountryPage({
   if (!country) notFound();
 
   return (
-    <AdminShell title={`Sélection nationale — ${country.nameFr}`}>
+    <AdminShell
+      title={`Sélection nationale — ${country.nameFr}`}
+      action={
+        <Link
+          href={`/admin/countries/${country.id}/matches`}
+          className="text-sm text-brand hover:underline"
+        >
+          Matchs de la sélection
+        </Link>
+      }
+    >
       <div className="space-y-8">
         <section className="rounded-lg border border-border bg-surface p-6">
           <h2 className="mb-4 font-semibold">Fiche du pays</h2>

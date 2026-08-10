@@ -23,7 +23,9 @@
     "leagues": "Championnats",
     "browseLeagues": "Explorer les championnats",
     "viewAll": "Tout voir",
-    "emptyState": "Aucune donnée pour le moment."
+    "emptyState": "Aucune donnée pour le moment.",
+    "matchesToday": "Matchs du jour",
+    "noMatchesToday": "Aucun match programmé aujourd'hui."
   },
   "league": {
     "clubs": "Clubs",
@@ -109,6 +111,10 @@
     "title": "Mon compte",
     "signInTitle": "Connexion",
     "signInIntro": "Accède à l'espace de ton club ou de ton agence.",
+    "adminSignInTitle": "Connexion administrateur",
+    "adminSignInIntro": "Réservé à l'administrateur du site.",
+    "adminSignInToggle": "Tu es l'administrateur du site ? Connexion administrateur",
+    "backToMemberSignIn": "← Connexion club ou agence",
     "signUpTitle": "Créer un compte",
     "signUpIntro": "Un compte permet aux clubs, centres de formation et agences de gérer leurs joueurs.",
     "fullName": "Nom et prénom",
@@ -200,6 +206,8 @@
     "ownScore": "Buts de ton club",
     "opponentScore": "Buts de l'adversaire",
     "matchday": "Journée",
+    "matchdayShort": "J{matchday}",
+    "upcoming": "À venir",
     "save": "Enregistrer le match",
     "saveSheet": "Enregistrer la feuille",
     "starter": "Titulaire",
@@ -337,7 +345,36 @@
     "allTypes": "Tous les types",
     "noClubs": "Aucun club engagé pour cette saison.",
     "continental": "Compétition continentale",
-    "strength": "Niveau"
+    "strength": "Niveau",
+    "selectionsEngaged": "Sélections engagées",
+    "noSelections": "Aucune sélection engagée pour cette saison."
+  },
+  "standings": {
+    "title": "Classement",
+    "group": "Poule {group}",
+    "team": "Équipe",
+    "played": "J",
+    "won": "G",
+    "drawn": "N",
+    "lost": "P",
+    "goalsFor": "BP",
+    "goalsAgainst": "BC",
+    "goalDifference": "Diff",
+    "points": "Pts"
+  },
+  "topScorers": {
+    "title": "Meilleurs buteurs"
+  },
+  "performanceRadar": {
+    "title": "Radar de performance",
+    "axis": {
+      "performance": "Performances",
+      "age": "Âge",
+      "clubLevel": "Niveau du club",
+      "community": "Communauté",
+      "contract": "Contrat",
+      "nationalTeam": "Sélection"
+    }
   },
   "competitionType": {
     "LEAGUE": "Championnat",
@@ -350,8 +387,10 @@
   "ageCategory": {
     "SENIOR": "Seniors",
     "U23": "Moins de 23 ans",
+    "U21": "Moins de 21 ans",
     "U20": "Moins de 20 ans",
     "U19": "Moins de 19 ans",
+    "U18": "Moins de 18 ans",
     "U17": "Moins de 17 ans",
     "U15": "Moins de 15 ans"
   },

@@ -23,7 +23,9 @@
     "leagues": "الدوريات",
     "browseLeagues": "استكشاف الدوريات",
     "viewAll": "عرض الكل",
-    "emptyState": "لا توجد بيانات بعد."
+    "emptyState": "لا توجد بيانات بعد.",
+    "matchesToday": "مباريات اليوم",
+    "noMatchesToday": "لا توجد مباريات مبرمجة اليوم."
   },
   "league": {
     "clubs": "الأندية",
@@ -109,6 +111,10 @@
     "title": "حسابي",
     "signInTitle": "تسجيل الدخول",
     "signInIntro": "ادخل إلى مساحة ناديك أو وكالتك.",
+    "adminSignInTitle": "تسجيل دخول المسؤول",
+    "adminSignInIntro": "مخصص لمسؤول الموقع فقط.",
+    "adminSignInToggle": "هل أنت مسؤول الموقع؟ تسجيل دخول المسؤول",
+    "backToMemberSignIn": "← تسجيل دخول نادٍ أو وكالة",
     "signUpTitle": "إنشاء حساب",
     "signUpIntro": "يتيح الحساب للأندية والأكاديميات والوكالات إدارة لاعبيها.",
     "fullName": "الاسم الكامل",
@@ -200,6 +206,8 @@
     "ownScore": "أهداف ناديك",
     "opponentScore": "أهداف الخصم",
     "matchday": "الجولة",
+    "matchdayShort": "ج{matchday}",
+    "upcoming": "لم تُلعب بعد",
     "save": "حفظ المباراة",
     "saveSheet": "حفظ الورقة",
     "starter": "أساسي",
@@ -337,7 +345,36 @@
     "allTypes": "جميع الأنواع",
     "noClubs": "لا توجد أندية مشاركة في هذا الموسم.",
     "continental": "مسابقة قارية",
-    "strength": "المستوى"
+    "strength": "المستوى",
+    "selectionsEngaged": "المنتخبات المشاركة",
+    "noSelections": "لا توجد منتخبات مشاركة في هذا الموسم."
+  },
+  "standings": {
+    "title": "الترتيب",
+    "group": "المجموعة {group}",
+    "team": "الفريق",
+    "played": "لعب",
+    "won": "فاز",
+    "drawn": "تعادل",
+    "lost": "خسر",
+    "goalsFor": "له",
+    "goalsAgainst": "عليه",
+    "goalDifference": "الفرق",
+    "points": "نقاط"
+  },
+  "topScorers": {
+    "title": "الهدافون"
+  },
+  "performanceRadar": {
+    "title": "رادار الأداء",
+    "axis": {
+      "performance": "الأداء",
+      "age": "العمر",
+      "clubLevel": "مستوى النادي",
+      "community": "المجتمع",
+      "contract": "العقد",
+      "nationalTeam": "المنتخب"
+    }
   },
   "competitionType": {
     "LEAGUE": "دوري",
@@ -350,8 +387,10 @@
   "ageCategory": {
     "SENIOR": "الفئة الأولى",
     "U23": "تحت 23 سنة",
+    "U21": "تحت 21 سنة",
     "U20": "تحت 20 سنة",
     "U19": "تحت 19 سنة",
+    "U18": "تحت 18 سنة",
     "U17": "تحت 17 سنة",
     "U15": "تحت 15 سنة"
   },

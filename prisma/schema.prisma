@@ -166,6 +166,11 @@ model Country {
   selections   NationalTeamSelection[]
   honours      Honour[]
 
+  tournamentEntries NationalTeamEntry[]
+  homeMatches       NationalTeamMatch[]           @relation("HomeNationalMatches")
+  awayMatches       NationalTeamMatch[]           @relation("AwayNationalMatches")
+  appearances       NationalTeamMatchAppearance[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -193,6 +198,9 @@ model Competition {
   entries      ClubCompetition[]
   honours      Honour[]
   matches      Match[]
+
+  nationalTeamEntries NationalTeamEntry[]
+  nationalTeamMatches NationalTeamMatch[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -249,10 +257,13 @@ model Club {
 
 /// Which competitions a club takes part in, for a given season.
 model ClubCompetition {
-  id            String @id @default(cuid())
+  id            String  @id @default(cuid())
   clubId        String
   competitionId String
   seasonId      String
+  /// Pool within the competition, e.g. "A", "B", "Nord". Null when the
+  /// competition is not split into pools.
+  group         String?
 
   club        Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
   competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
@@ -261,7 +272,7 @@ model ClubCompetition {
   createdAt DateTime @default(now())
 
   @@unique([clubId, competitionId, seasonId])
-  @@index([competitionId, seasonId])
+  @@index([competitionId, seasonId, group])
   @@index([clubId, seasonId])
 }
 
@@ -294,6 +305,7 @@ model Player {
   honours         Honour[]
   representations PlayerRepresentation[]
   appearances     MatchAppearance[]
+  nationalTeamAppearances NationalTeamMatchAppearance[]
 
   /// Which organisation entered this player, kept for accountability once clubs
   /// and agencies start filling the database themselves.
@@ -503,6 +515,89 @@ model MatchAppearance {
   @@index([clubId, matchId])
 }
 
+/// Which pool a country's national team sits in for a tournament, e.g. AFCON
+/// group stages. The country-level mirror of ClubCompetition — introduced
+/// separately because a Match always connects two clubs, and a national-team
+/// fixture connects two countries instead.
+model NationalTeamEntry {
+  id            String  @id @default(cuid())
+  countryId     String
+  competitionId String
+  seasonId      String
+  group         String?
+
+  country     Country     @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  season      Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([countryId, competitionId, seasonId])
+  @@index([competitionId, seasonId, group])
+  @@index([countryId, seasonId])
+}
+
+/// A fixture between two national teams. The country-level mirror of Match.
+model NationalTeamMatch {
+  id            String      @id @default(cuid())
+  competitionId String
+  seasonId      String
+  homeCountryId String
+  awayCountryId String
+  date          DateTime
+  status        MatchStatus @default(PLAYED)
+  ageCategory   AgeCategory @default(SENIOR)
+  homeScore     Int?
+  awayScore     Int?
+  venue         String?
+  matchday      Int?
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  season      Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  homeCountry Country     @relation("HomeNationalMatches", fields: [homeCountryId], references: [id], onDelete: Cascade)
+  awayCountry Country     @relation("AwayNationalMatches", fields: [awayCountryId], references: [id], onDelete: Cascade)
+
+  appearances NationalTeamMatchAppearance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([competitionId, seasonId])
+  @@index([homeCountryId, date])
+  @@index([awayCountryId, date])
+  @@index([date])
+}
+
+/// One player's line on a national-team sheet. The country-level mirror of
+/// MatchAppearance.
+model NationalTeamMatchAppearance {
+  id        String @id @default(cuid())
+  matchId   String
+  playerId  String
+  countryId String
+
+  isStarter     Boolean @default(true)
+  minutesPlayed Int     @default(0)
+  goals         Int     @default(0)
+  assists       Int     @default(0)
+  yellowCards   Int     @default(0)
+  redCards      Int     @default(0)
+  ownGoals      Int     @default(0)
+  goalsConceded Int?
+  cleanSheet    Boolean @default(false)
+
+  match   NationalTeamMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player  Player            @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  country Country           @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([matchId, playerId])
+  @@index([playerId])
+  @@index([countryId, matchId])
+}
+
 model Season {
   id        String   @id @default(cuid())
   label     String   @unique
@@ -510,9 +605,11 @@ model Season {
   endDate   DateTime
   isCurrent Boolean  @default(false)
 
-  transfers Transfer[]
-  entries   ClubCompetition[]
-  matches   Match[]
+  transfers          Transfer[]
+  entries            ClubCompetition[]
+  matches             Match[]
+  nationalTeamEntries NationalTeamEntry[]
+  nationalTeamMatches NationalTeamMatch[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

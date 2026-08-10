@@ -74,12 +74,21 @@ export default async function AdminCompetitionsPage() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-4">
-                    <Link
-                      href={`/admin/competitions/${competition.id}/clubs`}
-                      className="text-brand hover:underline"
-                    >
-                      Clubs
-                    </Link>
+                    {competition.type === "INTERNATIONAL" ? (
+                      <Link
+                        href={`/admin/competitions/${competition.id}/countries`}
+                        className="text-brand hover:underline"
+                      >
+                        Sélections
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/admin/competitions/${competition.id}/clubs`}
+                        className="text-brand hover:underline"
+                      >
+                        Clubs
+                      </Link>
+                    )}
                     <Link
                       href={`/admin/competitions/${competition.id}`}
                       className="text-brand hover:underline"
@@ -89,7 +98,7 @@ export default async function AdminCompetitionsPage() {
                     <DeleteButton
                       action={deleteCompetition}
                       id={competition.id}
-                      confirmLabel={`Supprimer « ${competition.nameFr} » ? Les engagements des clubs seront également supprimés.`}
+                      confirmLabel={`Supprimer « ${competition.nameFr} » ? Les engagements seront également supprimés.`}
                     />
                   </div>
                 </td>

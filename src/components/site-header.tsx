@@ -39,12 +39,6 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
             >
               {t("myAccount")}
             </Link>
-            <a
-              href="/admin"
-              className="text-sm text-white/70 transition-colors hover:text-white"
-            >
-              {t("admin")}
-            </a>
             <LocaleSwitcher currentLocale={locale} />
           </div>
         </div>

@@ -8,8 +8,10 @@ import {
   getLatestTransfers,
   getTopValuedPlayers,
 } from "@/lib/queries";
+import { todaysMatches } from "@/lib/fixtures";
 import { SectionTitle } from "@/components/data-table";
 import { Crest, PlayerPhoto, Flag } from "@/components/ui/media";
+import { TodayMatchesList, type TodayMatchEntry } from "@/components/today-matches-list";
 
 export default async function HomePage({
   params,
@@ -20,11 +22,42 @@ export default async function HomePage({
   setRequestLocale(locale);
   const t = await getTranslations();
 
-  const [allCompetitions, transfers, topPlayers] = await Promise.all([
-    getCompetitions(),
-    getLatestTransfers(8),
-    getTopValuedPlayers(8),
-  ]);
+  const [allCompetitions, transfers, topPlayers, { clubMatches, nationalMatches }] =
+    await Promise.all([
+      getCompetitions(),
+      getLatestTransfers(8),
+      getTopValuedPlayers(8),
+      todaysMatches(),
+    ]);
+
+  const todayMatches: TodayMatchEntry[] = [
+    ...clubMatches.map((match) => ({
+      id: match.id,
+      competitionName: localizedName(match.competition, locale),
+      hrefPrefix: "/clubs" as const,
+      homeSlug: match.homeClub.slug,
+      homeName: localizedName(match.homeClub, locale),
+      homeLogoUrl: match.homeClub.logoUrl,
+      awaySlug: match.awayClub.slug,
+      awayName: localizedName(match.awayClub, locale),
+      awayLogoUrl: match.awayClub.logoUrl,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
+    })),
+    ...nationalMatches.map((match) => ({
+      id: match.id,
+      competitionName: localizedName(match.competition, locale),
+      hrefPrefix: "/national-teams" as const,
+      homeSlug: match.homeCountry.slug,
+      homeName: localizedName(match.homeCountry, locale),
+      homeLogoUrl: match.homeCountry.flagUrl,
+      awaySlug: match.awayCountry.slug,
+      awayName: localizedName(match.awayCountry, locale),
+      awayLogoUrl: match.awayCountry.flagUrl,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
+    })),
+  ];
 
   // The home page showcases the domestic leagues; cups and continental
   // competitions are one click away on /competitions.
@@ -48,6 +81,18 @@ export default async function HomePage({
           </Link>
         </div>
         <div className="h-1.5 bg-accent" />
+      </section>
+
+      <section>
+        <SectionTitle>{t("home.matchesToday")}</SectionTitle>
+        {todayMatches.length === 0 ? (
+          <p className="text-sm text-muted">{t("home.noMatchesToday")}</p>
+        ) : (
+          <TodayMatchesList
+            matches={todayMatches}
+            upcomingLabel={t("match.upcoming")}
+          />
+        )}
       </section>
 
       <section>

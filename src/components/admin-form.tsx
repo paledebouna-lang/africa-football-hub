@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import type { ActionState } from "@/app/admin/actions";
+import { adminUploadImage } from "@/app/admin/actions";
 import { ImageUpload } from "@/components/image-upload";
 
 // The admin is French-only, so its upload wording lives here rather than in the
@@ -117,6 +118,7 @@ export function AdminForm({
                 hint={field.hint}
                 rounded={field.rounded}
                 labels={UPLOAD_LABELS}
+                action={adminUploadImage}
               />
             ) : field.kind === "checkbox" ? (
               <label className="flex items-center gap-2 text-sm">
