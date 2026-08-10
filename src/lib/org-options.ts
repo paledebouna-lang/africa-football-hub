@@ -32,6 +32,7 @@ export function playerFormLabels(t: Translator) {
     nationality: t("player.nationality"),
     dateOfBirth: t("player.dateOfBirth"),
     position: t("player.position"),
+    secondaryPositions: t("player.pitchSecondary"),
     foot: t("player.foot"),
     ageCategory: t("player.category"),
     squadLevel: t("player.squadLevel"),

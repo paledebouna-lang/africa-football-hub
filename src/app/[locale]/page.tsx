@@ -12,6 +12,7 @@ import { todaysMatches } from "@/lib/fixtures";
 import { SectionTitle } from "@/components/data-table";
 import { Crest, PlayerPhoto, Flag } from "@/components/ui/media";
 import { TodayMatchesList, type TodayMatchEntry } from "@/components/today-matches-list";
+import { AdSlotInline } from "@/components/ad-slot";
 
 export default async function HomePage({
   params,
@@ -138,6 +139,8 @@ export default async function HomePage({
           ))}
         </ul>
       </section>
+
+      <AdSlotInline />
 
       <div className="grid gap-8 lg:grid-cols-2">
         <section>

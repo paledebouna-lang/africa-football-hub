@@ -10,6 +10,7 @@ import { ProfileHeader, Badge, DataGrid, DataPoint } from "@/components/profile-
 import { DataTable, SectionTitle } from "@/components/data-table";
 import { Crest, PlayerPhoto, Flag } from "@/components/ui/media";
 import { HonoursList } from "@/components/honours-list";
+import { TrophyStrip } from "@/components/trophy-strip";
 
 export default async function ClubPage({
   params,
@@ -66,6 +67,7 @@ export default async function ClubPage({
             {club.founded !== null && <Badge>{club.founded}</Badge>}
           </>
         }
+        trophies={<TrophyStrip honours={club.honours} locale={locale} />}
         figureLabel={t("club.totalValue")}
         figure={total > 0 ? formatUsd(total, locale) : "—"}
       />

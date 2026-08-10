@@ -8,6 +8,7 @@ import { getCountryBySlug, currentValueOf } from "@/lib/queries";
 import { ProfileHeader, Badge } from "@/components/profile-header";
 import { DataTable, SectionTitle } from "@/components/data-table";
 import { HonoursList } from "@/components/honours-list";
+import { TrophyStrip } from "@/components/trophy-strip";
 import { Crest, PlayerPhoto, Flag } from "@/components/ui/media";
 
 export default async function NationalTeamPage({
@@ -44,6 +45,7 @@ export default async function NationalTeamPage({
         }
         title={name}
         badges={<Badge tone="brand">{country.code}</Badge>}
+        trophies={<TrophyStrip honours={country.honours} locale={locale} />}
       />
 
       <section>

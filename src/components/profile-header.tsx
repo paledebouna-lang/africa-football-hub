@@ -12,6 +12,7 @@ export function ProfileHeader({
   figure,
   figureNote,
   badges,
+  trophies,
 }: {
   media: React.ReactNode;
   breadcrumb?: React.ReactNode;
@@ -21,6 +22,8 @@ export function ProfileHeader({
   figure?: string;
   figureNote?: React.ReactNode;
   badges?: React.ReactNode;
+  /** Compact trophy badges (see TrophyStrip) — the embellishment a decorated profile earns. */
+  trophies?: React.ReactNode;
 }) {
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-surface">
@@ -38,6 +41,7 @@ export function ProfileHeader({
 
           {subtitle && <div className="mt-1 text-sm text-muted">{subtitle}</div>}
           {badges && <div className="mt-3 flex flex-wrap gap-2">{badges}</div>}
+          {trophies && <div className="mt-3">{trophies}</div>}
         </div>
 
         {figure && (

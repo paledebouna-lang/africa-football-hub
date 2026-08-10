@@ -6,9 +6,13 @@ import { formatUsd, formatUsdFull, formatDate, ageFrom } from "@/lib/format";
 import { localizedName, playerName } from "@/lib/localized";
 import { getPlayerBySlug } from "@/lib/queries";
 import { ValueChart } from "@/components/value-chart";
+import { QuarterlyValueChart } from "@/components/quarterly-value-chart";
+import { quarterlySeries } from "@/lib/quarterly";
 import { VideoGallery } from "@/components/video-gallery";
 import { ValuationBreakdown, type Breakdown } from "@/components/valuation-breakdown";
 import { PerformanceRadar } from "@/components/performance-radar";
+import { PositionPitch } from "@/components/position-pitch";
+import { TrophyStrip } from "@/components/trophy-strip";
 import { ProfileHeader, Badge, DataGrid, DataPoint } from "@/components/profile-header";
 import { DataTable, SectionTitle } from "@/components/data-table";
 import { PlayerPhoto, Crest, Flag } from "@/components/ui/media";
@@ -56,6 +60,7 @@ export default async function PlayerPage({
       ? { baseUsd: liveValuation.baseUsd, criteria: liveValuation.criteria }
       : null;
   const confidence = liveValuation?.confidence ?? 0;
+  const quarterlyPoints = quarterlySeries(player.marketValues);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
@@ -106,6 +111,7 @@ export default async function PlayerPage({
             {player.shirtNumber !== null && <Badge>#{player.shirtNumber}</Badge>}
           </>
         }
+        trophies={<TrophyStrip honours={player.honours} locale={locale} />}
         figureLabel={t("player.marketValue")}
         figure={
           latest === null ? t("player.noValue") : formatUsdFull(latest.valueUsd, locale)
@@ -148,6 +154,21 @@ export default async function PlayerPage({
           {t(`squadLevel.${player.squadLevel}`)}
         </DataPoint>
       </DataGrid>
+
+      {(player.position || player.secondaryPositions.length > 0) && (
+        <section className="rounded-lg border border-border bg-surface p-4">
+          <SectionTitle>{t("player.pitchTitle")}</SectionTitle>
+          <PositionPitch
+            position={player.position}
+            secondaryPositions={player.secondaryPositions}
+            positionLabel={(code) => t(`position.${code}`)}
+            legend={{
+              main: t("player.pitchMain"),
+              secondary: t("player.pitchSecondary"),
+            }}
+          />
+        </section>
+      )}
 
       {breakdown && (
         <section>
@@ -245,6 +266,18 @@ export default async function PlayerPage({
             }}
           />
           <p className="mt-2 text-xs text-muted">{t("statistics.source")}</p>
+        </section>
+      )}
+
+      {quarterlyPoints.length >= 2 && (
+        <section>
+          <SectionTitle>{t("player.quarterlyTrend")}</SectionTitle>
+          <div className="rounded-lg border border-border bg-surface p-4">
+            <QuarterlyValueChart
+              points={quarterlyPoints}
+              formatValue={(value) => formatUsd(value, locale)}
+            />
+          </div>
         </section>
       )}
 

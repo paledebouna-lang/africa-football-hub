@@ -81,6 +81,10 @@ export async function saveOrgPlayer(
     nameAr: text(formData.get("nameAr")),
     dateOfBirth: date(formData.get("dateOfBirth")),
     position: text(formData.get("position")) as never,
+    secondaryPositions: formData
+      .getAll("secondaryPositions")
+      .map(String)
+      .filter((value) => value !== text(formData.get("position"))) as never,
     foot: text(formData.get("foot")) as never,
     ageCategory: (text(formData.get("ageCategory")) ?? "SENIOR") as never,
     squadLevel: (text(formData.get("squadLevel")) ?? "FIRST_TEAM") as never,

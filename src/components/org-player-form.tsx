@@ -13,6 +13,7 @@ export type OrgPlayerDefaults = {
   nameAr?: string | null;
   dateOfBirth?: string;
   position?: string | null;
+  secondaryPositions?: string[];
   foot?: string | null;
   ageCategory?: string;
   squadLevel?: string;
@@ -81,6 +82,23 @@ export function OrgPlayerForm({
           options={positions}
           defaultValue={defaults.position ?? ""}
         />
+        <div className="sm:col-span-2">
+          <span className="block text-sm font-medium">{labels.secondaryPositions}</span>
+          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1.5">
+            {positions.map((option) => (
+              <label key={option.value} className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="checkbox"
+                  name="secondaryPositions"
+                  value={option.value}
+                  defaultChecked={defaults.secondaryPositions?.includes(option.value)}
+                  className="h-4 w-4 rounded border-border"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </div>
         <Select
           name="foot"
           label={labels.foot}

@@ -86,7 +86,11 @@
     "estimated": "Estimation",
     "confidence": "Fiabilité de l'estimation : {percent} %",
     "howComputed": "Comment cette valeur est calculée",
-    "squadLevel": "Niveau d'équipe"
+    "squadLevel": "Niveau d'équipe",
+    "quarterlyTrend": "Évolution trimestrielle de la valeur",
+    "pitchTitle": "Position sur le terrain",
+    "pitchMain": "Position principale",
+    "pitchSecondary": "Position(s) secondaire(s)"
   },
   "squadLevel": {
     "FIRST_TEAM": "Équipe première",

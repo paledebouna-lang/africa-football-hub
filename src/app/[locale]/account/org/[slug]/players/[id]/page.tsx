@@ -103,6 +103,7 @@ export default async function EditOrgPlayerPage({
             nameAr: player.nameAr,
             dateOfBirth: toDateInput(player.dateOfBirth),
             position: player.position,
+            secondaryPositions: player.secondaryPositions,
             foot: player.foot,
             ageCategory: player.ageCategory,
             squadLevel: player.squadLevel,

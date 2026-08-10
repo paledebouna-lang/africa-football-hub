@@ -86,7 +86,11 @@
     "estimated": "تقدير",
     "confidence": "درجة موثوقية التقدير: {percent}٪",
     "howComputed": "كيف تُحتسب هذه القيمة",
-    "squadLevel": "مستوى الفريق"
+    "squadLevel": "مستوى الفريق",
+    "quarterlyTrend": "تطور القيمة كل ثلاثة أشهر",
+    "pitchTitle": "المركز في الملعب",
+    "pitchMain": "المركز الأساسي",
+    "pitchSecondary": "المراكز الثانوية"
   },
   "squadLevel": {
     "FIRST_TEAM": "الفريق الأول",

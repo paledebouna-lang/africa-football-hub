@@ -48,6 +48,14 @@ export type Field =
       hint?: string;
     }
   | {
+      kind: "checkboxGroup";
+      name: string;
+      label: string;
+      options: FieldOption[];
+      defaultValues?: string[];
+      hint?: string;
+    }
+  | {
       kind: "hidden";
       name: string;
       label: string;
@@ -104,7 +112,9 @@ export function AdminForm({
           <div
             key={field.name}
             className={
-              field.kind === "checkbox" || field.kind === "image"
+              field.kind === "checkbox" ||
+              field.kind === "checkboxGroup" ||
+              field.kind === "image"
                 ? "sm:col-span-2"
                 : undefined
             }
@@ -130,6 +140,28 @@ export function AdminForm({
                 />
                 {field.label}
               </label>
+            ) : field.kind === "checkboxGroup" ? (
+              <>
+                <span className="block text-sm font-medium">{field.label}</span>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1.5">
+                  {field.options.map((option) => (
+                    <label
+                      key={option.value}
+                      className="flex items-center gap-1.5 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        name={field.name}
+                        value={option.value}
+                        defaultChecked={field.defaultValues?.includes(option.value)}
+                        className="h-4 w-4 rounded border-border"
+                      />
+                      {option.label}
+                    </label>
+                  ))}
+                </div>
+                {field.hint && <p className="mt-1 text-xs text-muted">{field.hint}</p>}
+              </>
             ) : (
               <>
                 <label htmlFor={field.name} className="block text-sm font-medium">

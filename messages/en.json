@@ -86,7 +86,11 @@
     "estimated": "Estimate",
     "confidence": "Estimate reliability: {percent}%",
     "howComputed": "How this value is calculated",
-    "squadLevel": "Squad level"
+    "squadLevel": "Squad level",
+    "quarterlyTrend": "Quarterly value trend",
+    "pitchTitle": "Position on the pitch",
+    "pitchMain": "Main position",
+    "pitchSecondary": "Secondary position(s)"
   },
   "squadLevel": {
     "FIRST_TEAM": "First team",

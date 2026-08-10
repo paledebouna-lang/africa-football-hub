@@ -7,6 +7,7 @@ import { routing, isRtl, type Locale } from "@/i18n/routing";
 import { site } from "@/lib/site";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { AdRail } from "@/components/ad-slot";
 import "../globals.css";
 
 const inter = Inter({
@@ -68,7 +69,13 @@ export default async function LocaleLayout({
       <body className="font-sans min-h-full flex flex-col">
         <NextIntlClientProvider>
           <SiteHeader locale={locale as Locale} />
-          <main className="flex-1 w-full">{children}</main>
+          <main className="flex-1 w-full">
+            <div className="mx-auto flex max-w-[1760px] items-start justify-center gap-4 px-2">
+              <AdRail />
+              <div className="min-w-0 flex-1">{children}</div>
+              <AdRail />
+            </div>
+          </main>
           <SiteFooter
             notice={t("footer.dataNotice")}
             rights={`© ${new Date().getFullYear()} ${site.name}. ${t("footer.rights")}`}

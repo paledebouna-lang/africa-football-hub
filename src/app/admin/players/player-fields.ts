@@ -44,6 +44,7 @@ type PlayerDefaults = {
   nameAr?: string | null;
   dateOfBirth?: Date | null;
   position?: string | null;
+  secondaryPositions?: string[];
   foot?: string | null;
   heightCm?: number | null;
   shirtNumber?: number | null;
@@ -124,6 +125,14 @@ export function playerFields(
       placeholder: "Non renseigné",
       options: POSITIONS,
       defaultValue: defaults.position ?? "",
+    },
+    {
+      kind: "checkboxGroup",
+      name: "secondaryPositions",
+      label: "Postes secondaires",
+      options: POSITIONS,
+      defaultValues: defaults.secondaryPositions ?? [],
+      hint: "Les autres postes où le joueur peut évoluer — affichés sur le terrain en orange.",
     },
     {
       kind: "select",

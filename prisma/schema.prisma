@@ -283,6 +283,9 @@ model Player {
   nameAr        String?
   dateOfBirth   DateTime?
   position      Position?
+  /// Other positions the player can cover, shown as secondary markers on the
+  /// pitch diagram. Empty when only the main position is known.
+  secondaryPositions Position[] @default([])
   foot          Foot?
   ageCategory   AgeCategory  @default(SENIOR)
   squadLevel    SquadLevel   @default(FIRST_TEAM)

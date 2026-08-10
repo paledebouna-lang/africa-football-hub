@@ -1,16 +1,5 @@
 import type { Locale } from "@/i18n/routing";
-import { localizedName } from "@/lib/localized";
-
-type HonourRow = {
-  id: string;
-  type: string;
-  year: number;
-  seasonLabel: string | null;
-  titleFr: string | null;
-  titleEn: string | null;
-  titleAr: string | null;
-  competition: { nameFr: string; nameEn: string; nameAr: string } | null;
-};
+import { groupHonours, type HonourRow } from "@/lib/honours";
 
 /**
  * Groups identical titles so a club that won its league eight times shows one
@@ -31,37 +20,7 @@ export function HonoursList({
     return <p className="text-sm text-muted">{emptyLabel}</p>;
   }
 
-  const labelOf = (honour: HonourRow): string => {
-    if (honour.competition) return localizedName(honour.competition, locale);
-
-    const byLocale: Record<Locale, string | null> = {
-      fr: honour.titleFr,
-      en: honour.titleEn,
-      ar: honour.titleAr,
-    };
-    return byLocale[locale] || honour.titleFr || honour.titleEn || "—";
-  };
-
-  const groups = new Map<
-    string,
-    { label: string; type: string; years: number[] }
-  >();
-
-  for (const honour of honours) {
-    const label = labelOf(honour);
-    const key = `${label}::${honour.type}`;
-    const existing = groups.get(key);
-
-    if (existing) {
-      existing.years.push(honour.year);
-    } else {
-      groups.set(key, { label, type: honour.type, years: [honour.year] });
-    }
-  }
-
-  const rows = [...groups.values()]
-    .map((group) => ({ ...group, years: group.years.sort((a, b) => b - a) }))
-    .sort((a, b) => b.years.length - a.years.length || b.years[0] - a.years[0]);
+  const rows = groupHonours(honours, locale);
 
   return (
     <ul className="divide-y divide-border rounded-lg border border-border bg-surface">

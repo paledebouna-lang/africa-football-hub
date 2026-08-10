@@ -244,12 +244,17 @@ export async function savePlayer(
 
   const position = optionalText(formData.get("position"));
   const foot = optionalText(formData.get("foot"));
+  const secondaryPositions = formData
+    .getAll("secondaryPositions")
+    .map(String)
+    .filter((value) => value !== position);
 
   const data = {
     name: parsed.data.name,
     nameAr: optionalText(formData.get("nameAr")),
     dateOfBirth: optionalDate(formData.get("dateOfBirth")),
     position: position as never,
+    secondaryPositions: secondaryPositions as never,
     foot: foot as never,
     ageCategory: (optionalText(formData.get("ageCategory")) ?? "SENIOR") as never,
     squadLevel: (optionalText(formData.get("squadLevel")) ?? "FIRST_TEAM") as never,
