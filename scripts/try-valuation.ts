@@ -18,6 +18,7 @@ const striker: Omit<ValuationInput, "now" | "community"> = {
   squadLevel: "FIRST_TEAM",
   contractUntil: contractIn(30),
   competitionStrength: 1.0,
+  clubFifaCategory: null,
   nationalTeam: { level: "SENIOR", caps: 12 },
   position: "ST",
   performance: {
@@ -52,6 +53,7 @@ const profiles: { label: string; input: Omit<ValuationInput, "now"> }[] = [
       squadLevel: "FIRST_TEAM",
       contractUntil: contractIn(24),
       competitionStrength: 0.95,
+      clubFifaCategory: null,
       nationalTeam: null,
       position: "CB",
       performance: { minutesPlayed: 2400, goals: 2, assists: 1, clubMatches: 28 },
@@ -65,9 +67,38 @@ const profiles: { label: string; input: Omit<ValuationInput, "now"> }[] = [
       squadLevel: "YOUTH",
       contractUntil: null,
       competitionStrength: 0.3,
+      clubFifaCategory: null,
       nationalTeam: null,
       position: null,
       performance: null,
+      community: null,
+    },
+  },
+  {
+    label: "Jeune 19 ans, club Catégorie II CAF — base = coût de formation FIFA",
+    input: {
+      dateOfBirth: birthdayFor(19),
+      squadLevel: "FIRST_TEAM",
+      contractUntil: contractIn(18),
+      competitionStrength: 0.5,
+      clubFifaCategory: 2,
+      nationalTeam: null,
+      position: "CM",
+      performance: { minutesPlayed: 1200, goals: 3, assists: 2, clubMatches: 18 },
+      community: null,
+    },
+  },
+  {
+    label: "Jeune 19 ans, club Catégorie IV CAF — base = coût de formation FIFA",
+    input: {
+      dateOfBirth: birthdayFor(19),
+      squadLevel: "FIRST_TEAM",
+      contractUntil: contractIn(18),
+      competitionStrength: 0.4,
+      clubFifaCategory: 4,
+      nationalTeam: null,
+      position: "CM",
+      performance: { minutesPlayed: 1200, goals: 3, assists: 2, clubMatches: 18 },
       community: null,
     },
   },
@@ -83,7 +114,7 @@ for (const profile of profiles) {
   const result = computeValuation({ ...profile.input, now });
   console.log(`\n${profile.label}`);
   console.log(
-    `  base ${usd.format(result.baseUsd)}  →  valeur ${usd.format(result.valueUsd)}` +
+    `  base ${usd.format(result.baseUsd)} [${result.baseSource}]  →  valeur ${usd.format(result.valueUsd)}` +
       `  (fiabilité ${Math.round(result.confidence * 100)} %)`,
   );
   for (const criterion of result.criteria) {

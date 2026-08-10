@@ -100,6 +100,7 @@
   "valuation": {
     "title": "Comment cette valeur est calculée",
     "base": "Valeur de départ, selon le niveau du championnat et la place dans l'effectif :",
+    "baseTraining": "Valeur de départ, d'après le barème officiel des coûts de formation FIFA/CAF pour la catégorie du club (joueur de moins de 20 ans) :",
     "criterion": "Critère",
     "weight": "Poids",
     "effect": "Effet",

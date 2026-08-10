@@ -65,6 +65,33 @@ export function baseValueUsd(
   return squadLevel === "FIRST_TEAM" ? band.firstTeamUsd : band.lowerLevelUsd;
 }
 
+/**
+ * FIFA's own CAF training-cost table (circular n°1905, annex "Coûts de
+ * formation et catégorisation des clubs pour 2024"): the indemnity a
+ * selling club is owed when a player under 21 signs elsewhere, per the
+ * training category their formative club is classified in. CAF has no
+ * Category I clubs, so only II–IV are populated.
+ *
+ * Used as the starting value for players still in — or just out of —
+ * training, so that figure traces back to a published FIFA reference
+ * instead of an internal guess. 20 and older, a player is presumed to have
+ * completed training and is priced on the competition/squad-level bands
+ * instead, same as before.
+ */
+export const CAF_TRAINING_COST_USD: Record<number, number> = {
+  2: 30_000,
+  3: 10_000,
+  4: 2_000,
+};
+
+const TRAINING_COST_MAX_AGE = 20;
+
+function trainingCostBase(age: number | null, clubFifaCategory: number | null): number | null {
+  if (age === null || age >= TRAINING_COST_MAX_AGE) return null;
+  if (clubFifaCategory === null) return null;
+  return CAF_TRAINING_COST_USD[clubFifaCategory] ?? null;
+}
+
 export type CriterionScore = {
   criterion: ValuationCriterion;
   /** -1 (strongly negative) to +1 (strongly positive). */
@@ -78,6 +105,8 @@ export type ValuationInput = {
   squadLevel: string;
   contractUntil: Date | null;
   competitionStrength: number | null;
+  /** FIFA training category (2-4) of the player's club, if classified. */
+  clubFifaCategory: number | null;
   /** Highest national-team involvement, if any is on record. */
   nationalTeam: { level: string; caps: number } | null;
   position: string | null;
@@ -163,6 +192,8 @@ function performanceScore(
 export type ValuationResult = {
   valueUsd: number;
   baseUsd: number;
+  /** Which reference the starting value traces back to — shown so the base is never just asserted. */
+  baseSource: "training" | "competition";
   confidence: number;
   criteria: CriterionScore[];
 };
@@ -203,10 +234,14 @@ function nationalTeamScore(level: string, caps: number): number {
 
 export function computeValuation(input: ValuationInput): ValuationResult {
   const now = input.now ?? new Date();
-  const base = baseValueUsd(input.competitionStrength, input.squadLevel);
+  const age = ageFrom(input.dateOfBirth, now);
+
+  const training = trainingCostBase(age, input.clubFifaCategory);
+  const base = training ?? baseValueUsd(input.competitionStrength, input.squadLevel);
+  const baseSource: ValuationResult["baseSource"] = training !== null ? "training" : "competition";
+
   const criteria: CriterionScore[] = [];
 
-  const age = ageFrom(input.dateOfBirth, now);
   if (age !== null) {
     criteria.push({
       criterion: "age",
@@ -260,7 +295,7 @@ export function computeValuation(input: ValuationInput): ValuationResult {
   // so the vote adjusts the model rather than restating it. That needs the
   // model's own answer first, which is why this happens in two passes — and why
   // the community criterion can never feed on itself.
-  const withoutCommunity = finalise(base, criteria);
+  const withoutCommunity = finalise(base, baseSource, criteria);
 
   if (input.community && input.community.voteCount >= MIN_VOTES_TO_COUNT) {
     const ratio = input.community.consensusUsd / Math.max(1, withoutCommunity.valueUsd);
@@ -273,7 +308,7 @@ export function computeValuation(input: ValuationInput): ValuationResult {
       label: `${input.community.voteCount} votes`,
     });
 
-    return finalise(base, criteria);
+    return finalise(base, baseSource, criteria);
   }
 
   return withoutCommunity;
@@ -284,12 +319,16 @@ export function computeValuation(input: ValuationInput): ValuationResult {
  * computed are simply absent: their weight is redistributed across the rest
  * rather than counted as zero, which would silently drag every estimate down.
  */
-function finalise(base: number, criteria: CriterionScore[]): ValuationResult {
+function finalise(
+  base: number,
+  baseSource: ValuationResult["baseSource"],
+  criteria: CriterionScore[],
+): ValuationResult {
   const totalWeight = Object.values(VALUATION_WEIGHTS).reduce((a, b) => a + b, 0);
   const usedWeight = criteria.reduce((sum, item) => sum + item.weight, 0);
 
   if (usedWeight === 0) {
-    return { valueUsd: base, baseUsd: base, confidence: 0, criteria };
+    return { valueUsd: base, baseUsd: base, baseSource, confidence: 0, criteria };
   }
 
   const weighted =
@@ -306,6 +345,7 @@ function finalise(base: number, criteria: CriterionScore[]): ValuationResult {
   return {
     valueUsd,
     baseUsd: base,
+    baseSource,
     confidence: usedWeight / totalWeight,
     criteria,
   };

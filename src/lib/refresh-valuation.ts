@@ -37,6 +37,7 @@ export async function computeLiveValuation(
     squadLevel: player.squadLevel,
     contractUntil: player.contractUntil,
     competitionStrength: player.club?.primaryCompetition?.strengthCoefficient ?? null,
+    clubFifaCategory: player.club?.fifaCategory ?? null,
     nationalTeam: bestSelection
       ? { level: bestSelection.level, caps: bestSelection.caps }
       : null,

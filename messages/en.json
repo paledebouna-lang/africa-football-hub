@@ -100,6 +100,7 @@
   "valuation": {
     "title": "How this value is calculated",
     "base": "Starting value, from the league level and the place in the squad:",
+    "baseTraining": "Starting value, from FIFA/CAF's official training cost scale for the club's category (player under 20):",
     "criterion": "Criterion",
     "weight": "Weight",
     "effect": "Effect",

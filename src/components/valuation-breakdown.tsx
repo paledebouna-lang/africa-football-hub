@@ -3,6 +3,7 @@ import { VALUATION_WEIGHTS } from "@/lib/valuation";
 
 export type Breakdown = {
   baseUsd: number;
+  baseSource?: "training" | "competition";
   criteria: CriterionScore[];
 };
 

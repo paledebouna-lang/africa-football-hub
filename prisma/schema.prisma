@@ -55,6 +55,11 @@ enum CompetitionType {
   YOUTH
 }
 
+enum CompetitionGender {
+  MALE
+  FEMALE
+}
+
 enum ClubType {
   CLUB
   ACADEMY
@@ -184,6 +189,7 @@ model Competition {
   nameEn      String
   nameAr      String
   type        CompetitionType @default(LEAGUE)
+  gender      CompetitionGender @default(MALE)
   ageCategory AgeCategory     @default(SENIOR)
   tier        Int             @default(1)
   logoUrl     String?

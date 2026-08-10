@@ -57,7 +57,11 @@ export default async function PlayerPage({
   // algorithmic — the criteria breakdown and radar are useful either way.
   const breakdown: Breakdown | null =
     liveValuation && liveValuation.criteria.length > 0
-      ? { baseUsd: liveValuation.baseUsd, criteria: liveValuation.criteria }
+      ? {
+          baseUsd: liveValuation.baseUsd,
+          baseSource: liveValuation.baseSource,
+          criteria: liveValuation.criteria,
+        }
       : null;
   const confidence = liveValuation?.confidence ?? 0;
   const quarterlyPoints = quarterlySeries(player.marketValues);
@@ -191,7 +195,10 @@ export default async function PlayerPage({
           criterionLabel={(criterion) => t(`valuationCriterion.${criterion}`)}
           labels={{
             title: t("valuation.title"),
-            base: t("valuation.base"),
+            base:
+              breakdown.baseSource === "training"
+                ? t("valuation.baseTraining")
+                : t("valuation.base"),
             criterion: t("valuation.criterion"),
             weight: t("valuation.weight"),
             effect: t("valuation.effect"),

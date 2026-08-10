@@ -87,7 +87,7 @@ export function clubFields(
       placeholder: "Non classé",
       options: FIFA_CATEGORIES,
       defaultValue: defaults.fifaCategory ? String(defaults.fifaCategory) : "",
-      hint: "Fixée par la fédération nationale. Sert au calcul de l'indemnité de formation.",
+      hint: "Fixée par la fédération nationale (barème FIFA CAF 2024 : II = 30 000 $, III = 10 000 $, IV = 2 000 $). Sert de valeur de départ pour les joueurs de moins de 20 ans formés dans ce club.",
     },
     {
       kind: "image",
