@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type { NewsItem } from "@/generated/prisma/client";
+import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { formatDate } from "@/lib/format";
 
@@ -12,8 +13,12 @@ export function NewsCard({
   locale: Locale;
   readMoreLabel: string;
 }) {
-  const card = (
-    <div className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-brand/10 transition-colors hover:border-brand">
+  return (
+    <Link
+      href={`/news/${item.id}`}
+      title={readMoreLabel}
+      className="group relative block aspect-square overflow-hidden rounded-lg border border-border bg-brand/10 transition-colors hover:border-brand"
+    >
       {item.imageUrl && (
         <img
           src={item.imageUrl}
@@ -32,14 +37,6 @@ export function NewsCard({
         </span>
         <span className="line-clamp-2 text-xs text-white/80">{item.excerpt}</span>
       </div>
-    </div>
-  );
-
-  if (!item.sourceUrl) return card;
-
-  return (
-    <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" title={readMoreLabel}>
-      {card}
-    </a>
+    </Link>
   );
 }

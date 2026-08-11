@@ -200,6 +200,10 @@ export async function getLatestNews(limit = 6) {
   });
 }
 
+export async function getNewsItem(id: string) {
+  return prisma.newsItem.findUnique({ where: { id } });
+}
+
 export type TransferFilters = {
   competitionSlug?: string;
   seasonId?: string;

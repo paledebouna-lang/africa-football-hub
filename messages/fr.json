@@ -29,6 +29,10 @@
     "news": "Actualités",
     "readMore": "Lire la suite"
   },
+  "news": {
+    "back": "← Retour à l'accueil",
+    "source": "Voir la publication d'origine"
+  },
   "league": {
     "clubs": "Clubs",
     "clubCount": "{count, plural, =0 {aucun club} one {# club} other {# clubs}}",
