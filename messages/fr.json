@@ -25,7 +25,9 @@
     "viewAll": "Tout voir",
     "emptyState": "Aucune donnée pour le moment.",
     "matchesToday": "Matchs du jour",
-    "noMatchesToday": "Aucun match programmé aujourd'hui."
+    "noMatchesToday": "Aucun match programmé aujourd'hui.",
+    "news": "Actualités",
+    "readMore": "Lire la suite"
   },
   "league": {
     "clubs": "Clubs",

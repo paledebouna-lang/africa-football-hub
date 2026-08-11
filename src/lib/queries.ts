@@ -191,6 +191,15 @@ export async function getLatestTransfers(limit = 10) {
   });
 }
 
+// ---------------------------------------------------------------- news
+
+export async function getLatestNews(limit = 6) {
+  return prisma.newsItem.findMany({
+    orderBy: { publishedAt: "desc" },
+    take: limit,
+  });
+}
+
 export type TransferFilters = {
   competitionSlug?: string;
   seasonId?: string;

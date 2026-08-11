@@ -25,7 +25,9 @@
     "viewAll": "عرض الكل",
     "emptyState": "لا توجد بيانات بعد.",
     "matchesToday": "مباريات اليوم",
-    "noMatchesToday": "لا توجد مباريات مبرمجة اليوم."
+    "noMatchesToday": "لا توجد مباريات مبرمجة اليوم.",
+    "news": "الأخبار",
+    "readMore": "قراءة المزيد"
   },
   "league": {
     "clubs": "الأندية",

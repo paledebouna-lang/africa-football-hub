@@ -1228,3 +1228,47 @@ export async function deleteSelection(formData: FormData): Promise<void> {
   revalidatePath(`/admin/countries/${selection.countryId}`);
   revalidatePublicSite();
 }
+
+// ---------------------------------------------------------------- news
+
+export async function saveNews(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const id = optionalText(formData.get("id"));
+  const title = optionalText(formData.get("title"));
+  const excerpt = optionalText(formData.get("excerpt"));
+
+  if (!title || !excerpt) {
+    return { error: "Le titre et le résumé sont obligatoires." };
+  }
+
+  const data = {
+    title,
+    excerpt,
+    imageUrl: optionalText(formData.get("imageUrl")),
+    sourceUrl: optionalText(formData.get("sourceUrl")),
+    publishedAt: optionalDate(formData.get("publishedAt")) ?? new Date(),
+  };
+
+  if (id) {
+    await prisma.newsItem.update({ where: { id }, data });
+  } else {
+    await prisma.newsItem.create({ data });
+  }
+
+  revalidatePath("/admin/news");
+  revalidatePublicSite();
+  redirect("/admin/news");
+}
+
+export async function deleteNews(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+
+  await prisma.newsItem.delete({ where: { id } });
+  revalidatePath("/admin/news");
+  revalidatePublicSite();
+}

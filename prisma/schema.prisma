@@ -791,3 +791,21 @@ model ValueProposal {
   @@index([userId])
   @@index([status])
 }
+
+/// A short football-news item, written by the admin — transfers, results,
+/// announcements. French only, like the rest of the back office; kept
+/// deliberately simple (no relations to Player/Club) so any story can be
+/// posted without its subject already existing in the database.
+model NewsItem {
+  id          String   @id @default(cuid())
+  title       String
+  excerpt     String
+  imageUrl    String?
+  sourceUrl   String?
+  publishedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publishedAt])
+}

@@ -7,12 +7,14 @@ import {
   getCompetitions,
   getLatestTransfers,
   getTopValuedPlayers,
+  getLatestNews,
 } from "@/lib/queries";
 import { todaysMatches } from "@/lib/fixtures";
 import { SectionTitle } from "@/components/data-table";
 import { Crest, PlayerPhoto, Flag } from "@/components/ui/media";
 import { TodayMatchesList, type TodayMatchEntry } from "@/components/today-matches-list";
 import { AdSlotInline } from "@/components/ad-slot";
+import { NewsCard } from "@/components/news-card";
 
 export default async function HomePage({
   params,
@@ -23,12 +25,13 @@ export default async function HomePage({
   setRequestLocale(locale);
   const t = await getTranslations();
 
-  const [allCompetitions, transfers, topPlayers, { clubMatches, nationalMatches }] =
+  const [allCompetitions, transfers, topPlayers, { clubMatches, nationalMatches }, news] =
     await Promise.all([
       getCompetitions(),
       getLatestTransfers(8),
       getTopValuedPlayers(8),
       todaysMatches(),
+      getLatestNews(6),
     ]);
 
   const todayMatches: TodayMatchEntry[] = [
@@ -95,6 +98,22 @@ export default async function HomePage({
           />
         )}
       </section>
+
+      {news.length > 0 && (
+        <section>
+          <SectionTitle>{t("home.news")}</SectionTitle>
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {news.map((item) => (
+              <NewsCard
+                key={item.id}
+                item={item}
+                locale={locale}
+                readMoreLabel={t("home.readMore")}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section>
         <div className="mb-3 flex items-baseline justify-between">
