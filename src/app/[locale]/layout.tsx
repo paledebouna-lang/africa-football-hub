@@ -8,6 +8,7 @@ import { site } from "@/lib/site";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { AdRail } from "@/components/ad-slot";
+import { getActiveAdBanner } from "@/lib/queries";
 import "../globals.css";
 
 const inter = Inter({
@@ -59,6 +60,7 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const t = await getTranslations();
+  const railBanner = await getActiveAdBanner("RAIL");
 
   return (
     <html
@@ -71,9 +73,9 @@ export default async function LocaleLayout({
           <SiteHeader locale={locale as Locale} />
           <main className="flex-1 w-full">
             <div className="mx-auto flex max-w-[1760px] items-start justify-center gap-4 px-2">
-              <AdRail />
+              <AdRail banner={railBanner} />
               <div className="min-w-0 flex-1">{children}</div>
-              <AdRail />
+              <AdRail banner={railBanner} />
             </div>
           </main>
           <SiteFooter

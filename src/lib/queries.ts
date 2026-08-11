@@ -208,6 +208,13 @@ export async function getNewsItem(id: string) {
   return prisma.newsItem.findUnique({ where: { id } });
 }
 
+// ---------------------------------------------------------------- ads
+
+export async function getActiveAdBanner(placement: "RAIL" | "INLINE") {
+  const banner = await prisma.adBanner.findUnique({ where: { placement } });
+  return banner?.isActive && banner.imageUrl ? banner : null;
+}
+
 export type TransferFilters = {
   competitionSlug?: string;
   seasonId?: string;

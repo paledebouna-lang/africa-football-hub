@@ -817,3 +817,20 @@ enum NewsOrigin {
   MANUAL
   AUTO
 }
+
+/// One banner per placement (unique on placement, so saving always updates
+/// the same row) — lets the admin run their own ads while waiting for real
+/// sponsors, without needing an ad-network integration.
+model AdBanner {
+  id        String      @id @default(cuid())
+  placement AdPlacement @unique
+  imageUrl  String?
+  linkUrl   String?
+  isActive  Boolean     @default(true)
+  updatedAt DateTime    @updatedAt
+}
+
+enum AdPlacement {
+  RAIL
+  INLINE
+}

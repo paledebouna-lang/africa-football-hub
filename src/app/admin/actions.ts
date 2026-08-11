@@ -1288,3 +1288,33 @@ export async function refreshNewsNow(): Promise<void> {
   revalidatePath("/admin/news");
   revalidatePublicSite();
 }
+
+// ---------------------------------------------------------------- ads
+
+export async function saveAdBanner(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const placement = optionalText(formData.get("placement"));
+  if (placement !== "RAIL" && placement !== "INLINE") {
+    return { error: "Emplacement inconnu." };
+  }
+
+  const data = {
+    imageUrl: optionalText(formData.get("imageUrl")),
+    linkUrl: optionalText(formData.get("linkUrl")),
+    isActive: formData.get("isActive") === "on",
+  };
+
+  await prisma.adBanner.upsert({
+    where: { placement },
+    update: data,
+    create: { placement, ...data },
+  });
+
+  revalidatePath("/admin/ads");
+  revalidatePublicSite();
+  redirect("/admin/ads");
+}

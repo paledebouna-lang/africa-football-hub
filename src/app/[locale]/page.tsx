@@ -8,6 +8,7 @@ import {
   getLatestTransfers,
   getTopValuedPlayers,
   getLatestNews,
+  getActiveAdBanner,
 } from "@/lib/queries";
 import { todaysMatches } from "@/lib/fixtures";
 import { SectionTitle } from "@/components/data-table";
@@ -25,14 +26,21 @@ export default async function HomePage({
   setRequestLocale(locale);
   const t = await getTranslations();
 
-  const [allCompetitions, transfers, topPlayers, { clubMatches, nationalMatches }, news] =
-    await Promise.all([
-      getCompetitions(),
-      getLatestTransfers(8),
-      getTopValuedPlayers(8),
-      todaysMatches(),
-      getLatestNews(4),
-    ]);
+  const [
+    allCompetitions,
+    transfers,
+    topPlayers,
+    { clubMatches, nationalMatches },
+    news,
+    inlineBanner,
+  ] = await Promise.all([
+    getCompetitions(),
+    getLatestTransfers(8),
+    getTopValuedPlayers(8),
+    todaysMatches(),
+    getLatestNews(4),
+    getActiveAdBanner("INLINE"),
+  ]);
 
   const todayMatches: TodayMatchEntry[] = [
     ...clubMatches.map((match) => ({
@@ -164,7 +172,7 @@ export default async function HomePage({
         </ul>
       </section>
 
-      <AdSlotInline />
+      <AdSlotInline banner={inlineBanner} />
 
       <div className="grid gap-8 lg:grid-cols-2">
         <section>

@@ -1,10 +1,40 @@
+/* eslint-disable @next/next/no-img-element */
 /**
- * Placeholder advertising zones. Empty on purpose — there is no ad network
- * wired in yet. Once the site has real content and traffic and an ad network
- * account is approved, drop that network's script/unit code inside these
- * containers (or replace them outright) to go live.
+ * Advertising zones. Show the admin's own banner (see /admin/ads) when one
+ * is active; otherwise fall back to an empty placeholder — there is no ad
+ * network wired in yet.
  */
-export function AdRail({ className = "" }: { className?: string }) {
+type AdBanner = { imageUrl: string | null; linkUrl: string | null } | null;
+
+function BannerImage({ banner, className }: { banner: AdBanner; className: string }) {
+  if (!banner?.imageUrl) return null;
+
+  const image = <img src={banner.imageUrl} alt="" className={className} />;
+
+  if (!banner.linkUrl) return image;
+
+  return (
+    <a href={banner.linkUrl} target="_blank" rel="noopener noreferrer sponsored">
+      {image}
+    </a>
+  );
+}
+
+export function AdRail({
+  banner = null,
+  className = "",
+}: {
+  banner?: AdBanner;
+  className?: string;
+}) {
+  if (banner?.imageUrl) {
+    return (
+      <div className={`sticky top-20 hidden h-[600px] w-40 shrink-0 xl:block ${className}`}>
+        <BannerImage banner={banner} className="h-full w-full rounded-md object-cover" />
+      </div>
+    );
+  }
+
   return (
     <aside
       aria-hidden
@@ -21,7 +51,21 @@ export function AdRail({ className = "" }: { className?: string }) {
   );
 }
 
-export function AdSlotInline({ className = "" }: { className?: string }) {
+export function AdSlotInline({
+  banner = null,
+  className = "",
+}: {
+  banner?: AdBanner;
+  className?: string;
+}) {
+  if (banner?.imageUrl) {
+    return (
+      <div className={`h-24 w-full overflow-hidden rounded-md ${className}`}>
+        <BannerImage banner={banner} className="h-full w-full object-cover" />
+      </div>
+    );
+  }
+
   return (
     <div
       aria-hidden
