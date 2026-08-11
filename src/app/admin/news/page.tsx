@@ -4,7 +4,7 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { AdminShell } from "@/components/admin-shell";
 import { DeleteButton } from "@/components/delete-button";
-import { deleteNews } from "../actions";
+import { deleteNews, refreshNewsNow } from "../actions";
 
 export default async function AdminNewsPage() {
   if (!(await isAdminAuthenticated())) {
@@ -18,17 +18,31 @@ export default async function AdminNewsPage() {
     <AdminShell
       title="Actualités"
       action={
-        <Link
-          href="/admin/news/new"
-          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong transition-colors"
-        >
-          Publier une actualité
-        </Link>
+        <div className="flex items-center gap-3">
+          <form action={refreshNewsNow}>
+            <button
+              type="submit"
+              className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:border-brand transition-colors"
+            >
+              Actualiser maintenant
+            </button>
+          </form>
+          <Link
+            href="/admin/news/new"
+            className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong transition-colors"
+          >
+            Publier une actualité
+          </Link>
+        </div>
       }
     >
       <p className="mb-4 text-sm text-muted">
         Ces informations s&apos;affichent sous forme de petites cartes sur la page
-        d&apos;accueil, dans leur ordre de publication.
+        d&apos;accueil, dans leur ordre de publication. « Actualiser maintenant »
+        relaie les dernières dépêches de RFI Sport, BBC Afrique, Jeune Afrique et
+        Africa Top Sports qui citent un club, un joueur, un entraîneur, une
+        sélection ou une compétition déjà enregistré sur le site — un passage
+        automatique tourne aussi chaque jour.
       </p>
 
       {news.length === 0 ? (
@@ -48,6 +62,7 @@ export default async function AdminNewsPage() {
               <tr>
                 <th className="px-4 py-3 text-left font-medium">Date</th>
                 <th className="px-4 py-3 text-left font-medium">Titre</th>
+                <th className="px-4 py-3 text-left font-medium">Source</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
@@ -58,6 +73,16 @@ export default async function AdminNewsPage() {
                     {dateFormat.format(item.publishedAt)}
                   </td>
                   <td className="px-4 py-3 font-medium">{item.title}</td>
+                  <td className="px-4 py-3 text-muted">
+                    <span className="inline-flex items-center gap-2">
+                      {item.origin === "AUTO" && (
+                        <span className="rounded bg-brand/10 px-1.5 py-0.5 text-[11px] font-medium text-brand">
+                          Auto
+                        </span>
+                      )}
+                      {item.sourceName ?? "—"}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-4">
                       <Link

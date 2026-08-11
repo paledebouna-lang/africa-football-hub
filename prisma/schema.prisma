@@ -792,20 +792,28 @@ model ValueProposal {
   @@index([status])
 }
 
-/// A short football-news item, written by the admin — transfers, results,
-/// announcements. French only, like the rest of the back office; kept
-/// deliberately simple (no relations to Player/Club) so any story can be
-/// posted without its subject already existing in the database.
+/// A short football-news item — transfers, results, announcements. Written
+/// by the admin, or imported automatically from press RSS feeds (see
+/// src/lib/news-fetch.ts). French only, like the rest of the back office;
+/// kept deliberately simple (no relations to Player/Club) so any story can
+/// be posted without its subject already existing in the database.
 model NewsItem {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   excerpt     String
   imageUrl    String?
-  sourceUrl   String?
-  publishedAt DateTime @default(now())
+  sourceUrl   String?    @unique
+  sourceName  String?
+  origin      NewsOrigin @default(MANUAL)
+  publishedAt DateTime   @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([publishedAt])
+}
+
+enum NewsOrigin {
+  MANUAL
+  AUTO
 }

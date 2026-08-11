@@ -31,7 +31,8 @@
   },
   "news": {
     "back": "← Back to home",
-    "source": "View original publication"
+    "source": "View original publication",
+    "sourcePrefix": "Source:"
   },
   "league": {
     "clubs": "Clubs",

@@ -31,6 +31,7 @@ export function NewsCard({
       <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-3">
         <span className="text-[11px] text-white/70">
           {formatDate(item.publishedAt, locale)}
+          {item.sourceName && ` · ${item.sourceName}`}
         </span>
         <span className="line-clamp-2 text-sm font-semibold leading-snug text-white">
           {item.title}

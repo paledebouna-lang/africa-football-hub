@@ -31,6 +31,7 @@ export default async function NewsPage({
         <div className="p-6">
           <span className="text-sm text-muted">
             {formatDate(item.publishedAt, locale)}
+            {item.sourceName && ` · ${t("news.sourcePrefix")} ${item.sourceName}`}
           </span>
           <h1 className="mt-1 text-2xl font-bold">{item.title}</h1>
           <p className="mt-4 whitespace-pre-line text-foreground">{item.excerpt}</p>

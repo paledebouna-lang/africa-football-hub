@@ -5,6 +5,7 @@ type NewsDefaults = {
   excerpt?: string;
   imageUrl?: string | null;
   sourceUrl?: string | null;
+  sourceName?: string | null;
   publishedAt?: Date;
 };
 
@@ -44,6 +45,13 @@ export function newsFields(defaults: NewsDefaults = {}): Field[] {
       required: true,
       defaultValue: defaults.excerpt,
       hint: "Quelques lignes : l'essentiel de l'information.",
+    },
+    {
+      kind: "text",
+      name: "sourceName",
+      label: "Source (facultatif)",
+      defaultValue: defaults.sourceName ?? "",
+      hint: "Ex. « RFI Sport », « communiqué du club »... Affiché comme citation sur la fiche.",
     },
     {
       kind: "url",

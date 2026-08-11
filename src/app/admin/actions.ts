@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 import { youtubeVideoId } from "@/lib/youtube";
 import { refreshPlayerValuation } from "@/lib/refresh-valuation";
+import { fetchAndImportNews } from "@/lib/news-fetch";
 import { sendMail } from "@/lib/mailer";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -1250,13 +1251,14 @@ export async function saveNews(
     excerpt,
     imageUrl: optionalText(formData.get("imageUrl")),
     sourceUrl: optionalText(formData.get("sourceUrl")),
+    sourceName: optionalText(formData.get("sourceName")),
     publishedAt: optionalDate(formData.get("publishedAt")) ?? new Date(),
   };
 
   if (id) {
     await prisma.newsItem.update({ where: { id }, data });
   } else {
-    await prisma.newsItem.create({ data });
+    await prisma.newsItem.create({ data: { ...data, origin: "MANUAL" } });
   }
 
   revalidatePath("/admin/news");
@@ -1269,6 +1271,20 @@ export async function deleteNews(formData: FormData): Promise<void> {
   const id = String(formData.get("id"));
 
   await prisma.newsItem.delete({ where: { id } });
+  revalidatePath("/admin/news");
+  revalidatePublicSite();
+}
+
+/**
+ * Manual trigger for the same press sweep Vercel Cron runs daily (see
+ * vercel.json + /api/cron/fetch-news) — lets the admin pull fresh news on
+ * demand instead of waiting for the schedule.
+ */
+export async function refreshNewsNow(): Promise<void> {
+  await requireAdmin();
+
+  await fetchAndImportNews();
+
   revalidatePath("/admin/news");
   revalidatePublicSite();
 }
