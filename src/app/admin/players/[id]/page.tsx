@@ -6,6 +6,7 @@ import { AdminForm } from "@/components/admin-form";
 import { savePlayer } from "../../actions";
 import { playerFields } from "../player-fields";
 import { HonoursManager } from "@/components/honours-manager";
+import { PlayerVideosManager } from "@/components/player-videos-manager";
 
 export default async function EditPlayerPage({
   params,
@@ -56,6 +57,8 @@ export default async function EditPlayerPage({
           )}
         />
       </div>
+
+        <PlayerVideosManager playerId={player.id} />
 
         <HonoursManager holder={{ kind: "playerId", id: player.id }} />
       </div>
