@@ -200,6 +200,10 @@ export async function getLatestNews(limit = 6) {
   });
 }
 
+export async function getAllNews() {
+  return prisma.newsItem.findMany({ orderBy: { publishedAt: "desc" } });
+}
+
 export async function getNewsItem(id: string) {
   return prisma.newsItem.findUnique({ where: { id } });
 }

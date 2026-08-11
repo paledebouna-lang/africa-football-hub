@@ -2,7 +2,19 @@ import Parser from "rss-parser";
 import { prisma } from "@/lib/prisma";
 import { NEWS_FEEDS, FOOTBALL_KEYWORDS } from "@/lib/news-sources";
 
-const parser = new Parser();
+type CustomItem = {
+  mediaThumbnail?: { $: { url?: string } };
+  contentEncoded?: string;
+};
+
+const parser: Parser<Record<string, unknown>, CustomItem> = new Parser({
+  customFields: {
+    item: [
+      ["media:thumbnail", "mediaThumbnail"],
+      ["content:encoded", "contentEncoded"],
+    ],
+  },
+});
 
 /** How many of the most recent items to look at per feed on each run. */
 const ITEMS_PER_FEED = 25;
@@ -27,6 +39,24 @@ function matchesKnownEntity(text: string, entityNames: string[]): boolean {
   return entityNames.some(
     (name) => name.length > 2 && normalized.includes(normalize(name)),
   );
+}
+
+/**
+ * Feeds expose an item's picture in different ways: a plain <enclosure>,
+ * a <media:thumbnail>, or — for feeds like Africa Top Sports — only as an
+ * <img> inside the full article HTML. Tries each in that order.
+ */
+function extractImageUrl(item: Parser.Item & CustomItem): string | null {
+  if (item.enclosure?.url && (!item.enclosure.type || item.enclosure.type.startsWith("image"))) {
+    return item.enclosure.url;
+  }
+
+  const thumbnailUrl = item.mediaThumbnail?.$?.url;
+  if (thumbnailUrl) return thumbnailUrl;
+
+  const html = item.contentEncoded ?? item.content ?? "";
+  const match = /<img[^>]+src="([^"]+)"/i.exec(html);
+  return match ? match[1] : null;
 }
 
 function truncate(text: string, maxLength: number): string {
@@ -91,27 +121,30 @@ export async function fetchAndImportNews(): Promise<NewsImportResult[]> {
 
         const excerpt = truncate(item.contentSnippet ?? title, EXCERPT_MAX_LENGTH);
         const publishedAt = item.isoDate ? new Date(item.isoDate) : new Date();
+        const imageUrl = extractImageUrl(item);
 
-        try {
-          await prisma.newsItem.create({
-            data: {
-              title: truncate(title, 160),
-              excerpt,
-              sourceUrl: link,
-              sourceName: feed.name,
-              origin: "AUTO",
-              publishedAt,
-            },
-          });
-          imported += 1;
-        } catch (error) {
-          // Unique constraint on sourceUrl: this item was already imported.
-          if (
-            !(error instanceof Object && "code" in error && error.code === "P2002")
-          ) {
-            throw error;
+        const existing = await prisma.newsItem.findUnique({ where: { sourceUrl: link } });
+        if (existing) {
+          // Backfills the image on items imported before extractImageUrl()
+          // existed; leaves everything else untouched in case it was edited.
+          if (!existing.imageUrl && imageUrl) {
+            await prisma.newsItem.update({ where: { id: existing.id }, data: { imageUrl } });
           }
+          continue;
         }
+
+        await prisma.newsItem.create({
+          data: {
+            title: truncate(title, 160),
+            excerpt,
+            imageUrl,
+            sourceUrl: link,
+            sourceName: feed.name,
+            origin: "AUTO",
+            publishedAt,
+          },
+        });
+        imported += 1;
       }
 
       results.push({ feed: feed.name, imported });

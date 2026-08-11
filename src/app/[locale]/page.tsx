@@ -31,7 +31,7 @@ export default async function HomePage({
       getLatestTransfers(8),
       getTopValuedPlayers(8),
       todaysMatches(),
-      getLatestNews(6),
+      getLatestNews(4),
     ]);
 
   const todayMatches: TodayMatchEntry[] = [
@@ -101,8 +101,13 @@ export default async function HomePage({
 
       {news.length > 0 && (
         <section>
-          <SectionTitle>{t("home.news")}</SectionTitle>
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mb-3 flex items-baseline justify-between">
+            <SectionTitle>{t("home.news")}</SectionTitle>
+            <Link href="/news" className="text-sm font-medium text-brand hover:underline">
+              {t("home.viewAll")}
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {news.map((item) => (
               <NewsCard
                 key={item.id}
