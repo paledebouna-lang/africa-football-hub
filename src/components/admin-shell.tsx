@@ -9,6 +9,7 @@ const NAV = [
   { href: "/admin/coaches", label: "Entraîneurs" },
   { href: "/admin/transfers", label: "Transferts" },
   { href: "/admin/countries", label: "Sélections" },
+  { href: "/admin/home", label: "Accueil" },
   { href: "/admin/news", label: "Actualités" },
   { href: "/admin/ads", label: "Publicité" },
   { href: "/admin/organisations", label: "Comptes" },

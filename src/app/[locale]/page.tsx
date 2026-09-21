@@ -15,6 +15,10 @@ import { SectionTitle } from "@/components/data-table";
 import { Crest, PlayerPhoto, Flag } from "@/components/ui/media";
 import { TodayMatchesList, type TodayMatchEntry } from "@/components/today-matches-list";
 import { AdSlotInline } from "@/components/ad-slot";
+import { HomeHero } from "@/components/home-hero";
+import { HomeHighlights, BestByCountry } from "@/components/home-highlights";
+import { playerOfTheWeek, topScorersByLeague, bestPlayerByCountry } from "@/lib/home-highlights";
+import { prisma } from "@/lib/prisma";
 import { NewsCard } from "@/components/news-card";
 
 export default async function HomePage({
@@ -33,6 +37,10 @@ export default async function HomePage({
     { clubMatches, nationalMatches },
     news,
     inlineBanner,
+    hero,
+    weekPlayer,
+    scorers,
+    countryBest,
   ] = await Promise.all([
     getCompetitions(),
     getLatestTransfers(8),
@@ -40,6 +48,10 @@ export default async function HomePage({
     todaysMatches(),
     getLatestNews(4),
     getActiveAdBanner("INLINE"),
+    prisma.homeHero.findUnique({ where: { id: "main" } }),
+    playerOfTheWeek(),
+    topScorersByLeague(3),
+    bestPlayerByCountry(6),
   ]);
 
   const todayMatches: TodayMatchEntry[] = [
@@ -71,29 +83,22 @@ export default async function HomePage({
     })),
   ];
 
-  // The home page showcases the domestic leagues; cups and continental
-  // competitions are one click away on /competitions.
-  const leagues = allCompetitions.filter(
-    (competition) => competition.type === "LEAGUE",
-  );
+  // The home page showcases the nine strongest top divisions; every other
+  // competition is one click away on /competitions.
+  const leagues = allCompetitions
+    .filter((competition) => competition.type === "LEAGUE" && competition.tier === 1)
+    .sort((a, b) => b.strengthCoefficient - a.strengthCoefficient)
+    .slice(0, 9);
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-6">
-      <section className="overflow-hidden rounded-lg bg-brand-strong text-white">
-        <div className="px-6 py-10 sm:px-10 sm:py-14">
-          <h1 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
-            {t("home.heroTitle")}
-          </h1>
-          <p className="mt-3 max-w-2xl text-white/85">{t("home.heroSubtitle")}</p>
-          <Link
-            href="/competitions"
-            className="mt-6 inline-block rounded bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:brightness-110"
-          >
-            {t("home.browseLeagues")}
-          </Link>
-        </div>
-        <div className="h-1.5 bg-accent" />
-      </section>
+      <HomeHero
+        videoUrl={hero?.isActive ? hero.videoUrl : null}
+        title={t("home.heroTitle")}
+        subtitle={t("home.heroSubtitle")}
+        ctaHref="/competitions"
+        ctaLabel={t("home.browseLeagues")}
+      />
 
       <section>
         <SectionTitle>{t("home.matchesToday")}</SectionTitle>
@@ -106,6 +111,36 @@ export default async function HomePage({
           />
         )}
       </section>
+
+      <HomeHighlights
+        playerOfWeek={
+          weekPlayer && {
+            slug: weekPlayer.player.slug,
+            name: playerName(weekPlayer.player, locale),
+            photoUrl: weekPlayer.player.photoUrl,
+            clubName: weekPlayer.player.club ? localizedName(weekPlayer.player.club, locale) : null,
+            clubLogoUrl: weekPlayer.player.club?.logoUrl ?? null,
+            stats: [
+              t("home.weekGoals", { count: weekPlayer.goals }),
+              t("home.weekAssists", { count: weekPlayer.assists }),
+            ].join(" · "),
+          }
+        }
+        scorers={scorers.map((row) => ({
+          competitionSlug: row.competition.slug,
+          competitionName: localizedName(row.competition, locale),
+          playerSlug: row.player.slug,
+          playerName: playerName(row.player, locale),
+          photoUrl: row.player.photoUrl,
+          clubName: localizedName(row.club, locale),
+          goals: row.goals,
+        }))}
+        labels={{
+          playerOfWeek: t("home.playerOfWeek"),
+          topScorers: t("home.topScorers"),
+          goals: t("home.goalsShort"),
+        }}
+      />
 
       {news.length > 0 && (
         <section>
@@ -260,6 +295,18 @@ export default async function HomePage({
           )}
         </section>
       </div>
+
+      <BestByCountry
+        title={t("home.bestByCountry")}
+        rows={countryBest.map(({ player, value }) => ({
+          playerSlug: player.slug,
+          playerName: playerName(player, locale),
+          photoUrl: player.photoUrl,
+          countryName: player.nationality ? localizedName(player.nationality, locale) : "",
+          flagUrl: player.nationality?.flagUrl ?? null,
+          valueLabel: formatUsd(value, locale),
+        }))}
+      />
     </div>
   );
 }

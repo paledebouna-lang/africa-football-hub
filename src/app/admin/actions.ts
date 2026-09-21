@@ -1318,3 +1318,30 @@ export async function saveAdBanner(
   revalidatePublicSite();
   redirect("/admin/ads");
 }
+
+// ---------------------------------------------------------------- home hero
+
+export async function saveHomeHero(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const videoUrl = optionalText(formData.get("videoUrl"));
+  if (videoUrl && youtubeVideoId(videoUrl) === null) {
+    return {
+      error: "Ce lien n'est pas une vidéo YouTube reconnue. Copie l'adresse depuis la barre du navigateur.",
+    };
+  }
+
+  const data = { videoUrl, isActive: formData.get("isActive") === "on" };
+  await prisma.homeHero.upsert({
+    where: { id: "main" },
+    update: data,
+    create: { id: "main", ...data },
+  });
+
+  revalidatePath("/admin/home");
+  revalidatePublicSite();
+  redirect("/admin/home");
+}

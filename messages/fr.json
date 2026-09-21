@@ -27,7 +27,13 @@
     "matchesToday": "Matchs du jour",
     "noMatchesToday": "Aucun match programmé aujourd'hui.",
     "news": "Actualités",
-    "readMore": "Lire la suite"
+    "readMore": "Lire la suite",
+    "playerOfWeek": "Joueur de la semaine",
+    "topScorers": "Meilleurs buteurs",
+    "goalsShort": "buts",
+    "bestByCountry": "Meilleur joueur par pays",
+    "weekGoals": "{count, plural, =0 {0 but} one {# but} other {# buts}}",
+    "weekAssists": "{count, plural, =0 {0 passe décisive} one {# passe décisive} other {# passes décisives}}"
   },
   "news": {
     "back": "← Retour à l'accueil",

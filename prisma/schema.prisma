@@ -834,3 +834,13 @@ enum AdPlacement {
   RAIL
   INLINE
 }
+
+/// Single-row settings for the home page hero. The optional YouTube video
+/// plays muted behind the headline; with no active video the hero keeps its
+/// plain blue background.
+model HomeHero {
+  id        String   @id @default("main")
+  videoUrl  String?
+  isActive  Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}

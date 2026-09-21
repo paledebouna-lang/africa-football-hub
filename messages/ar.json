@@ -27,7 +27,13 @@
     "matchesToday": "مباريات اليوم",
     "noMatchesToday": "لا توجد مباريات مبرمجة اليوم.",
     "news": "الأخبار",
-    "readMore": "قراءة المزيد"
+    "readMore": "قراءة المزيد",
+    "playerOfWeek": "لاعب الأسبوع",
+    "topScorers": "الهدافون",
+    "goalsShort": "أهداف",
+    "bestByCountry": "أفضل لاعب في كل بلد",
+    "weekGoals": "{count, plural, one {# هدف} other {# أهداف}}",
+    "weekAssists": "{count, plural, one {# تمريرة حاسمة} other {# تمريرات حاسمة}}"
   },
   "news": {
     "back": "→ العودة إلى الرئيسية",
