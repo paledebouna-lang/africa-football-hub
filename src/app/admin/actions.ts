@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 import { youtubeVideoId } from "@/lib/youtube";
+import { isValidHeroVideo } from "@/lib/hero-video";
 import { refreshPlayerValuation } from "@/lib/refresh-valuation";
 import { fetchAndImportNews } from "@/lib/news-fetch";
 import { sendMail } from "@/lib/mailer";
@@ -1328,9 +1329,10 @@ export async function saveHomeHero(
   await requireAdmin();
 
   const videoUrl = optionalText(formData.get("videoUrl"));
-  if (videoUrl && youtubeVideoId(videoUrl) === null) {
+  if (videoUrl && !isValidHeroVideo(videoUrl)) {
     return {
-      error: "Ce lien n'est pas une vidéo YouTube reconnue. Copie l'adresse depuis la barre du navigateur.",
+      error:
+        "Ce lien n'est ni une vidéo YouTube reconnue, ni un fichier vidéo (.mp4 ou .webm). Copie l'adresse depuis la barre du navigateur, ou envoie un fichier.",
     };
   }
 
@@ -1344,4 +1346,28 @@ export async function saveHomeHero(
   revalidatePath("/admin/home");
   revalidatePublicSite();
   redirect("/admin/home");
+}
+
+/**
+ * A video is too large to pass through a server action (Vercel caps request
+ * bodies at a few MB), so the browser uploads it straight to storage with a
+ * one-shot signed URL issued here, under requireAdmin().
+ */
+export async function createHeroVideoUpload(
+  extension: string,
+): Promise<{ path?: string; token?: string; publicUrl?: string; error?: string }> {
+  await requireAdmin();
+
+  const ext = extension === "webm" ? "webm" : "mp4";
+  const admin = createSupabaseAdminClient();
+  if (!admin) {
+    return { error: "Envoi indisponible : SUPABASE_SERVICE_ROLE_KEY n'est pas configurée." };
+  }
+
+  const path = `hero/${crypto.randomUUID()}.${ext}`;
+  const { data, error } = await admin.storage.from("site-videos").createSignedUploadUrl(path);
+  if (error || !data) return { error: error?.message ?? "Envoi impossible." };
+
+  const { data: publicData } = admin.storage.from("site-videos").getPublicUrl(path);
+  return { path, token: data.token, publicUrl: publicData.publicUrl };
 }
