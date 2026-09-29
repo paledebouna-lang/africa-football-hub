@@ -28,6 +28,7 @@ type CompetitionDefaults = {
   logoUrl?: string | null;
   countryId?: string | null;
   strengthCoefficient?: number;
+  apiFootballLeagueId?: number | null;
 };
 
 export function competitionFields(
@@ -77,6 +78,13 @@ export function competitionFields(
       label: "Coefficient de niveau",
       defaultValue: String(defaults.strengthCoefficient ?? 1),
       hint: "Sert à pondérer les performances. 1,00 = meilleur championnat national africain ; 1,30 pour la Ligue des Champions CAF ; 0,40 pour une deuxième division.",
+    },
+    {
+      kind: "number",
+      name: "apiFootballLeagueId",
+      label: "ID API-Football",
+      defaultValue: defaults.apiFootballLeagueId ? String(defaults.apiFootballLeagueId) : "",
+      hint: "Active la mise à jour automatique du calendrier, des résultats et des effectifs. Laisse vide et utilise « Détecter les championnats » dans Administration > Synchronisation.",
     },
     {
       kind: "image",

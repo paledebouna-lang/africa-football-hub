@@ -14,6 +14,7 @@ type ClubDefaults = {
   teamPhotoUrl?: string | null;
   websiteUrl?: string | null;
   fifaCategory?: number | null;
+  apiFootballTeamId?: number | null;
   primaryCompetitionId?: string | null;
   parentClubId?: string | null;
 };
@@ -88,6 +89,13 @@ export function clubFields(
       options: FIFA_CATEGORIES,
       defaultValue: defaults.fifaCategory ? String(defaults.fifaCategory) : "",
       hint: "Fixée par la fédération nationale (barème FIFA CAF 2024 : II = 30 000 $, III = 10 000 $, IV = 2 000 $). Sert de valeur de départ pour les joueurs de moins de 20 ans formés dans ce club.",
+    },
+    {
+      kind: "number",
+      name: "apiFootballTeamId",
+      label: "ID API-Football",
+      defaultValue: defaults.apiFootballTeamId ? String(defaults.apiFootballTeamId) : "",
+      hint: "Rempli automatiquement par la synchronisation. À saisir à la main pour une équipe signalée « non reconnue » dans Administration > Synchronisation.",
     },
     {
       kind: "image",

@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin/countries", label: "Sélections" },
   { href: "/admin/home", label: "Accueil" },
   { href: "/admin/news", label: "Actualités" },
+  { href: "/admin/sync", label: "Synchronisation" },
   { href: "/admin/ads", label: "Publicité" },
   { href: "/admin/organisations", label: "Comptes" },
   { href: "/admin/proposals", label: "Propositions" },

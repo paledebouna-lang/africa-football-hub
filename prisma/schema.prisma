@@ -199,6 +199,10 @@ model Competition {
   /// 1.00 = strongest African domestic league; a second division sits near 0.40.
   strengthCoefficient Float @default(1.0)
 
+  /// League id on API-Football (api-sports.io). When set, fixtures, results and
+  /// squads are pulled automatically by the daily sync (src/lib/api-football-sync.ts).
+  apiFootballLeagueId Int? @unique
+
   country      Country?          @relation(fields: [countryId], references: [id], onDelete: SetNull)
   primaryClubs Club[]            @relation("ClubPrimaryCompetition")
   entries      ClubCompetition[]
@@ -236,6 +240,12 @@ model Club {
   /// national association. Drives the training compensation owed for this club's
   /// academy graduates. Null while unclassified.
   fifaCategory Int?
+
+  /// Team id on API-Football, set by the sync when it recognises the club.
+  apiFootballTeamId Int?    @unique
+  /// Last time the squad was pulled from API-Football; the sync refreshes the
+  /// stalest squads first so the daily request quota is shared fairly.
+  squadSyncedAt     DateTime?
 
   primaryCompetition Competition? @relation("ClubPrimaryCompetition", fields: [primaryCompetitionId], references: [id], onDelete: SetNull)
   parentClub         Club?        @relation("ClubAcademies", fields: [parentClubId], references: [id], onDelete: SetNull)
@@ -302,6 +312,9 @@ model Player {
   photoUrl      String?
   clubId        String?
   nationalityId String?
+
+  /// Player id on API-Football, set when the player comes from a synced squad.
+  apiFootballPlayerId Int? @unique
 
   club        Club?    @relation(fields: [clubId], references: [id], onDelete: SetNull)
   nationality Country? @relation("PlayerNationality", fields: [nationalityId], references: [id], onDelete: SetNull)
@@ -476,6 +489,9 @@ model Match {
   awayScore     Int?
   venue         String?
   matchday      Int?
+
+  /// Fixture id on API-Football, set when the match is created or updated by the sync.
+  apiFootballFixtureId Int? @unique
 
   competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   season      Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
@@ -843,4 +859,12 @@ model HomeHero {
   videoUrl  String?
   isActive  Boolean  @default(true)
   updatedAt DateTime @updatedAt
+}
+
+/// Outcome of the latest API-Football sync (fixtures, results and squads), shown
+/// in /admin/sync so unrecognised teams or leagues can be linked by hand.
+model ApiFootballSync {
+  id     String   @id @default("main")
+  ranAt  DateTime
+  report Json
 }
