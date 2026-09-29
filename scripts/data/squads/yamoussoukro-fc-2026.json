@@ -1,0 +1,169 @@
+{
+ "club": "Yamoussoukro FC",
+ "photoFolder": "yamoussoukro-fc",
+ "source": "https://yakrofc.ci (export PDF de l'effectif Ligue 1 fourni par l'administrateur)",
+ "players": [
+  {
+   "number": 1,
+   "name": "Bouba Konaté",
+   "role": "Gardien de but",
+   "position": "GK"
+  },
+  {
+   "number": 16,
+   "name": "Koné Zoumana",
+   "role": "Gardien de but",
+   "position": "GK"
+  },
+  {
+   "number": 30,
+   "name": "Dosso Ilan Ismahila",
+   "role": "Gardien de but",
+   "position": "GK"
+  },
+  {
+   "number": 2,
+   "name": "Traoré Daouda",
+   "role": "Latéral gauche",
+   "position": "LB"
+  },
+  {
+   "number": 3,
+   "name": "Dia Wah Mickael",
+   "role": "Latéral gauche",
+   "position": "LB"
+  },
+  {
+   "number": 5,
+   "name": "Boubli Ange Messi",
+   "role": "Latéral gauche",
+   "position": "LB"
+  },
+  {
+   "number": 6,
+   "name": "N'Goran Doh Kouassi Dima",
+   "role": "Défenseur central",
+   "position": "CB"
+  },
+  {
+   "number": 12,
+   "name": "Sougué Moustapha",
+   "role": "Défenseur central",
+   "position": "CB"
+  },
+  {
+   "number": 17,
+   "name": "Seoulou Prince Elie",
+   "role": "Défenseur central",
+   "position": "CB"
+  },
+  {
+   "number": 19,
+   "name": "Diomandé Jaurès Kevin",
+   "role": "Latéral gauche",
+   "position": "LB"
+  },
+  {
+   "number": 22,
+   "name": "Koné Issouf Veratti",
+   "role": "Latéral droit",
+   "position": "RB"
+  },
+  {
+   "number": 23,
+   "name": "Doumbia Mory",
+   "role": "Latéral gauche",
+   "position": "LB"
+  },
+  {
+   "number": 4,
+   "name": "Dione Papa Amadou",
+   "role": "Milieu",
+   "position": "CM"
+  },
+  {
+   "number": 7,
+   "name": "Doumbia Mory Ismael",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 10,
+   "name": "Afful Seedorf Asanté",
+   "role": "Milieu",
+   "position": "CM"
+  },
+  {
+   "number": 13,
+   "name": "Diallo Idrissa",
+   "role": "Milieu défensif",
+   "position": "DM"
+  },
+  {
+   "number": 14,
+   "name": "Camara Mamadou",
+   "role": "Milieu défensif",
+   "position": "DM"
+  },
+  {
+   "number": 15,
+   "name": "Gama Nasset Aurélien",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 18,
+   "name": "N'Guessan Blaikatchi Elvis",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 21,
+   "name": "Bastou Djibril",
+   "role": "Milieu",
+   "position": "CM"
+  },
+  {
+   "number": 24,
+   "name": "Diarrassouba Cheickh",
+   "role": "Milieu défensif",
+   "position": "DM"
+  },
+  {
+   "number": 26,
+   "name": "Gidami Ousman Youssouf",
+   "role": "Milieu",
+   "position": "CM"
+  },
+  {
+   "number": 9,
+   "name": "Sanogo Hassan Aziz",
+   "role": "Attaquant",
+   "position": "ST"
+  },
+  {
+   "number": 11,
+   "name": "Sangaré Daouda",
+   "role": "Attaquant",
+   "position": "ST"
+  },
+  {
+   "number": 25,
+   "name": "Kamagaté Mory",
+   "role": "Attaquant",
+   "position": "ST"
+  },
+  {
+   "number": 28,
+   "name": "Akala Christian",
+   "role": "Attaquant",
+   "position": "ST"
+  },
+  {
+   "number": 29,
+   "name": "De La Celle Jean David",
+   "role": "Attaquant",
+   "position": "ST"
+  }
+ ]
+}

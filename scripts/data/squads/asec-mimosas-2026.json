@@ -1,0 +1,211 @@
+{
+ "club": "ASEC Mimosas",
+ "photoFolder": "asec",
+ "source": "https://www.asec.ci/season/team (export PDF du 29/09/2026)",
+ "players": [
+  {
+   "number": 2,
+   "name": "YABRÉ Mohamed Ali",
+   "role": "Latéral gauche",
+   "position": "LB"
+  },
+  {
+   "number": 3,
+   "name": "SAMAKÉ Gaoussou",
+   "role": "Latéral gauche",
+   "position": "LB"
+  },
+  {
+   "number": 4,
+   "name": "BLÉ Kouassi Mickael",
+   "role": "Défenseur central",
+   "position": "CB"
+  },
+  {
+   "number": 6,
+   "name": "GUEI Kagnon-min Wilfried Semelo",
+   "role": "Milieu défensif",
+   "position": "DM"
+  },
+  {
+   "number": 7,
+   "name": "SRO Deha Rivaldo",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 9,
+   "name": "OUATO Bakaré Kevin",
+   "role": "Attaquant",
+   "position": "ST"
+  },
+  {
+   "number": 10,
+   "name": "KORÉ Saint-Jean Firmin",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 11,
+   "name": "KOFFI Kouadio Brou David",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 12,
+   "name": "KOUASSI Eddi Franck Eric Zaballa",
+   "role": "Attaquant",
+   "position": "ST"
+  },
+  {
+   "number": 13,
+   "name": "MAIGA Koimizo Abdoul Abass",
+   "role": "Milieu défensif",
+   "position": "DM"
+  },
+  {
+   "number": 14,
+   "name": "TEMBELY Younouss Ambassako",
+   "role": "Milieu défensif",
+   "position": "DM"
+  },
+  {
+   "number": 15,
+   "name": "FANÉ Seydou",
+   "role": "Milieu défensif",
+   "position": "DM"
+  },
+  {
+   "number": 16,
+   "name": "YELO Ruben Levy",
+   "role": "Gardien de but",
+   "position": "GK"
+  },
+  {
+   "number": 18,
+   "name": "GODO Othiniel Ephraim",
+   "role": "Latéral gauche",
+   "position": "LB"
+  },
+  {
+   "number": 19,
+   "name": "KOUYATÉ Ben Guel",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 20,
+   "name": "SOU D'Avila Junior",
+   "role": "Milieu offensif",
+   "position": "AM"
+  },
+  {
+   "number": 21,
+   "name": "FOLLY Ayayi Charles",
+   "role": "Gardien de but",
+   "position": "GK"
+  },
+  {
+   "number": 22,
+   "name": "BEDI Guy Stephane",
+   "role": "Attaquant",
+   "position": "ST"
+  },
+  {
+   "number": 23,
+   "name": "LASME Aimé Guy Urbain",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 24,
+   "name": "DIARRA Ousmane Zanetti",
+   "role": "Latéral droit",
+   "position": "RB"
+  },
+  {
+   "number": 25,
+   "name": "ATTÉ Youssifou",
+   "role": "Latéral droit",
+   "position": "RB"
+  },
+  {
+   "number": 26,
+   "name": "ZOUZOU Franck Carlos",
+   "role": "Défenseur central",
+   "position": "CB"
+  },
+  {
+   "number": 27,
+   "name": "SAMASSA Abdoulaye",
+   "role": "Défenseur central",
+   "position": "CB"
+  },
+  {
+   "number": 28,
+   "name": "KANÉ Zoumana",
+   "role": "Milieu défensif",
+   "position": "DM"
+  },
+  {
+   "number": 29,
+   "name": "AMANY N'Doua Franck Armel",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 31,
+   "name": "OULARÉ Hibrahime",
+   "role": "Milieu défensif",
+   "position": "DM"
+  },
+  {
+   "number": 32,
+   "name": "KOUTOU Ziega Yannick Sylvestre",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 33,
+   "name": "FOFANA Adama",
+   "role": "Milieu offensif",
+   "position": "AM"
+  },
+  {
+   "number": 35,
+   "name": "ZADI Zokou Benito",
+   "role": "Défenseur central",
+   "position": "CB"
+  },
+  {
+   "number": 36,
+   "name": "GNAHORÉ Dakaud Guy Serge",
+   "role": "Milieu offensif",
+   "position": "AM"
+  },
+  {
+   "number": 37,
+   "name": "GOBEHI Cedric Jonathan",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 38,
+   "name": "BAMBA Souhalio",
+   "role": "Ailier",
+   "position": "RW"
+  },
+  {
+   "number": 39,
+   "name": "ZOUZOUA Josué Caleb",
+   "role": "Attaquant",
+   "position": "ST"
+  },
+  {
+   "number": 40,
+   "name": "ZOMBRA Ousmane",
+   "role": "Gardien de but",
+   "position": "GK"
+  }
+ ]
+}
