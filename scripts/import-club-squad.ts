@@ -15,15 +15,23 @@ const prisma = new PrismaClient({ adapter });
  *   npx tsx scripts/import-club-squad.ts scripts/data/squads/asec-mimosas-2026.json
  *
  * Crée les joueurs absents et met à jour ceux déjà présents (même slug, ou
- * même nom dans le club). Ces listes ne donnent ni date de naissance ni
- * nationalité : ces champs restent vides. Un effectif ainsi saisi n'est plus
+ * même nom dans le club). Taille et date de naissance sont reprises quand
+ * la liste les donne ; la nationalité reste vide. Un effectif ainsi saisi n'est plus
  * complété par API-Football, qui se contente d'y relier ses joueurs.
  */
 type Squad = {
   club: string;
   photoFolder: string;
   source: string;
-  players: { number: number; name: string; role: string; position: Position }[];
+  players: {
+    number: number;
+    name: string;
+    role: string | null;
+    position: Position | null;
+    heightCm?: number;
+    /** ISO date, e.g. "2005-10-07". */
+    dateOfBirth?: string;
+  }[];
 };
 
 async function main() {
@@ -42,6 +50,8 @@ async function main() {
       // Clubs list wingers without a side: either flank.
       secondaryPositions: row.position === "RW" ? (["LW"] as Position[]) : [],
       shirtNumber: row.number,
+      heightCm: row.heightCm ?? null,
+      dateOfBirth: row.dateOfBirth ? new Date(row.dateOfBirth) : null,
       photoUrl: `/players/${squad.photoFolder}/${slug}.jpg`,
       clubId: club.id,
     };
