@@ -7,7 +7,7 @@ import { runApiFootballSync } from "@/lib/api-football-sync";
 export const maxDuration = 300;
 
 /**
- * Nightly fixtures, results and squads sync from API-Football. Vercel Cron hits
+ * Fixtures, results and squads sync from API-Football, twice a day. Vercel Cron hits
  * this on a schedule (see vercel.json); the "Synchroniser maintenant" button in
  * /admin/sync runs the same runApiFootballSync() directly.
  */

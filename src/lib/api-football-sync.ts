@@ -2,17 +2,29 @@ import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slug";
 import type { Position, MatchStatus } from "@/generated/prisma/client";
 import {
+  QuotaExhaustedError,
+  fetchCountries,
   fetchCountryLeagues,
+  fetchCountryTeams,
   fetchFixtures,
   fetchLeague,
   fetchSquad,
+  requestsRemainingToday,
+  type ApiCountry,
   type ApiFixture,
 } from "@/lib/api-football";
 
 /**
- * Keeps every linked league up to date from API-Football: fixtures, results
- * (which feed the standings) and squads. Runs daily from
- * /api/cron/sync-football and on demand from /admin/sync.
+ * Keeps the site in step with API-Football: links each national championship
+ * and each club to its API counterpart, then pulls fixtures, results (which
+ * feed the standings) and squads. Runs twice a day from /api/cron/sync-football
+ * and on demand from /admin/sync.
+ *
+ * The API quota is small (100 requests a day on the free plan), so a run works
+ * until the quota or its time budget is spent and the next run picks up where
+ * it stopped: already-linked leagues are refreshed first, then countries are
+ * set up one at a time, those with the most clubs first, then the oldest
+ * squads are refreshed.
  *
  * Nothing is ever deleted, and a club already on the site is never duplicated:
  * an API team is attached to an existing club when the names clearly match, a
@@ -31,13 +43,42 @@ export type LeagueReport = {
   unmatchedTeams?: { id: number; name: string }[];
 };
 
-export type SyncReport = {
-  leagues: LeagueReport[];
-  squads: { club: string; created: number; updated: number; error?: string }[];
+export type CountryReport = {
+  country: string;
+  leaguesLinked?: string[];
+  leaguesAvailable?: string[];
+  clubsLinked?: number;
+  clubsUnmatched?: string[];
+  error?: string;
 };
 
-/** Squads refreshed per run, stalest first: each costs one API request. */
-const SQUADS_PER_RUN = Number(process.env.API_FOOTBALL_SQUADS_PER_RUN ?? 20);
+export type SyncReport = {
+  leagues: LeagueReport[];
+  countries: CountryReport[];
+  squads: { club: string; created: number; updated: number; error?: string }[];
+  /** Why the run ended before everything was up to date. */
+  stopped?: "quota" | "time";
+  requestsRemaining?: number | null;
+  /** Clubs taking part this season whose squad has never been imported. */
+  squadsPending?: number;
+};
+
+/** Where the setup of each country stands between runs. */
+type Progress = {
+  apiCountries?: ApiCountry[];
+  /** countryId -> ISO date of the last league lookup / team lookup. */
+  leaguesCheckedAt?: Record<string, string>;
+  teamsCheckedAt?: Record<string, string>;
+  /** Linked leagues whose current season the API plan cannot read, until the date. */
+  blockedUntil?: Record<number, string>;
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const LEAGUE_RECHECK_MS = 30 * DAY_MS;
+const TEAM_RECHECK_MS = 7 * DAY_MS;
+const SQUAD_REFRESH_MS = 30 * DAY_MS;
+/** Stay clear of the 300 s function limit, database writes included. */
+const RUN_BUDGET_MS = 250_000;
 
 const STOPWORDS = new Set(["fc", "sc", "afc", "club", "football", "de", "d", "du", "des", "la", "le", "les", "l", "the"]);
 
@@ -121,11 +162,22 @@ function positionOf(position: string | null): Position | null {
   }
 }
 
-async function uniqueSlug(base: string, taken: (slug: string) => Promise<unknown>): Promise<string> {
-  const seed = base || "sans-nom";
-  let slug = seed;
-  for (let n = 2; await taken(slug); n += 1) slug = `${seed}-${n}`;
-  return slug;
+
+/** Teams API-Football lists that are not a senior men's first team. */
+const NOT_FIRST_TEAM = /\b(w|u\d{2}|ii|b|reserves?|women|ladies|fem|feminin[ae]?|dames|youth|juniors?)\b/i;
+
+class OutOfTimeError extends Error {}
+
+class Run {
+  private readonly deadline = Date.now() + RUN_BUDGET_MS;
+  readonly report: SyncReport = { leagues: [], countries: [], squads: [] };
+  /** Competitions already synced during this run. */
+  readonly leaguesDone = new Set<string>();
+
+  /** Throws once the time budget is spent, so no API request is started too late. */
+  check() {
+    if (Date.now() > this.deadline) throw new OutOfTimeError();
+  }
 }
 
 type CompetitionToSync = {
@@ -134,6 +186,119 @@ type CompetitionToSync = {
   countryId: string | null;
   apiFootballLeagueId: number;
 };
+
+async function loadProgress(): Promise<Progress> {
+  const row = await prisma.apiFootballSync.findUnique({ where: { id: "progress" } });
+  return (row?.report as Progress | undefined) ?? {};
+}
+
+async function saveProgress(progress: Progress) {
+  const report = progress as object;
+  await prisma.apiFootballSync.upsert({
+    where: { id: "progress" },
+    update: { ranAt: new Date(), report },
+    create: { id: "progress", ranAt: new Date(), report },
+  });
+}
+
+const olderThan = (iso: string | undefined, ms: number) => !iso || Date.now() - new Date(iso).getTime() > ms;
+
+/** Clubs of a country — through their main league or any entry — not yet tied to an API team. */
+function unlinkedClubsOf(countryId: string) {
+  return prisma.club.findMany({
+    where: {
+      apiFootballTeamId: null,
+      type: "CLUB",
+      OR: [
+        { primaryCompetition: { countryId } },
+        { entries: { some: { competition: { countryId } } } },
+      ],
+    },
+    select: {
+      id: true,
+      nameFr: true,
+      nameEn: true,
+      shortName: true,
+      _count: { select: { entries: { where: { season: { isCurrent: true } } } } },
+    },
+  });
+}
+
+function bestForClub<T>(club: { nameFr: string; nameEn: string; shortName: string | null }, pool: T[], nameOf: (item: T) => string) {
+  for (const name of [club.nameFr, club.nameEn, club.shortName]) {
+    if (!name) continue;
+    const match = bestMatch(name, pool, (item) => [nameOf(item)]);
+    if (match) return match;
+  }
+  return null;
+}
+
+/** Ties the country's championships to API-Football leagues by name (one request). */
+async function discoverCountryLeagues(run: Run, countryId: string, apiName: string, report: CountryReport) {
+  const competitions = await prisma.competition.findMany({
+    where: { countryId, apiFootballLeagueId: null, type: "LEAGUE", gender: "MALE", ageCategory: "SENIOR" },
+    orderBy: { tier: "asc" },
+  });
+  if (competitions.length === 0) return;
+
+  run.check();
+  const leagues = await fetchCountryLeagues(apiName);
+  const taken = new Set(
+    (await prisma.competition.findMany({
+      where: { apiFootballLeagueId: { in: leagues.map((l) => l.league.id) } },
+      select: { apiFootballLeagueId: true },
+    })).map((c) => c.apiFootballLeagueId),
+  );
+  const available = leagues.filter((league) => !taken.has(league.league.id));
+
+  for (const competition of competitions) {
+    const match =
+      bestMatch(competition.nameEn, available, (league) => [league.league.name]) ??
+      bestMatch(competition.nameFr, available, (league) => [league.league.name]);
+    if (!match) continue;
+    await prisma.competition.update({
+      where: { id: competition.id },
+      data: { apiFootballLeagueId: match.league.id },
+    });
+    available.splice(available.indexOf(match), 1);
+    (report.leaguesLinked ??= []).push(`${competition.nameFr} → ${match.league.name} (id ${match.league.id})`);
+  }
+  if (available.length > 0 && competitions.length > (report.leaguesLinked?.length ?? 0)) {
+    report.leaguesAvailable = available.map((league) => `${league.league.name} (id ${league.league.id})`);
+  }
+}
+
+/** Ties the country's clubs to API-Football teams by name (one request, whatever the plan). */
+async function linkCountryTeams(run: Run, countryId: string, apiName: string, report: CountryReport) {
+  const clubs = await unlinkedClubsOf(countryId);
+  if (clubs.length === 0) return;
+
+  run.check();
+  const teams = (await fetchCountryTeams(apiName))
+    .map((row) => row.team)
+    .filter((team) => !team.national && !NOT_FIRST_TEAM.test(team.name));
+  const used = new Set(
+    (await prisma.club.findMany({
+      where: { apiFootballTeamId: { in: teams.map((team) => team.id) } },
+      select: { apiFootballTeamId: true },
+    })).map((club) => club.apiFootballTeamId),
+  );
+  const pool = teams.filter((team) => !used.has(team.id));
+
+  // Clubs playing this season pick first.
+  clubs.sort((a, b) => b._count.entries - a._count.entries);
+  report.clubsLinked = 0;
+  for (const club of clubs) {
+    const team = bestForClub(club, pool, (item) => item.name);
+    if (!team) {
+      if (club._count.entries > 0) (report.clubsUnmatched ??= []).push(club.nameFr);
+      continue;
+    }
+    await prisma.club.update({ where: { id: club.id }, data: { apiFootballTeamId: team.id } });
+    pool.splice(pool.indexOf(team), 1);
+    report.clubsLinked += 1;
+  }
+}
 
 /** Site club for every API team of the league, attaching or creating clubs as needed. */
 async function resolveClubs(
@@ -158,19 +323,7 @@ async function resolveClubs(
   const pending = [...teams.values()].filter((team) => !clubByTeam.has(team.id));
   if (pending.length === 0) return clubByTeam;
 
-  // Clubs of the same country not yet linked to any API team.
-  const candidates = competition.countryId
-    ? await prisma.club.findMany({
-        where: {
-          apiFootballTeamId: null,
-          OR: [
-            { primaryCompetition: { countryId: competition.countryId } },
-            { entries: { some: { competition: { countryId: competition.countryId } } } },
-          ],
-        },
-        select: { id: true, nameFr: true, nameEn: true, shortName: true },
-      })
-    : [];
+  const candidates = competition.countryId ? await unlinkedClubsOf(competition.countryId) : [];
 
   // Once the admin has registered this season's clubs, a team the sync does
   // not recognise is more likely a spelling difference than a new club.
@@ -193,9 +346,11 @@ async function resolveClubs(
       continue;
     }
 
-    const slug = await uniqueSlug(slugify(team.name), (candidate) =>
-      prisma.club.findUnique({ where: { slug: candidate }, select: { id: true } }),
-    );
+    const base = slugify(team.name) || "club";
+    let slug = base;
+    for (let n = 2; await prisma.club.findUnique({ where: { slug }, select: { id: true } }); n += 1) {
+      slug = `${base}-${n}`;
+    }
     const club = await prisma.club.create({
       data: {
         slug,
@@ -214,9 +369,14 @@ async function resolveClubs(
   return clubByTeam;
 }
 
-async function syncLeague(competition: CompetitionToSync): Promise<LeagueReport> {
+async function syncLeague(run: Run, competition: CompetitionToSync, progress: Progress): Promise<LeagueReport> {
   const report: LeagueReport = { competition: competition.nameFr, status: "ok" };
+  const blocked = progress.blockedUntil?.[competition.apiFootballLeagueId];
+  if (blocked && new Date(blocked) > new Date()) {
+    return { ...report, status: "skipped", message: "Saison en cours non incluse dans l'abonnement API-Football." };
+  }
 
+  run.check();
   const [league] = await fetchLeague(competition.apiFootballLeagueId);
   const current = league?.seasons.find((season) => season.current);
   if (!current) return { ...report, status: "skipped", message: "Aucune saison en cours sur API-Football." };
@@ -224,7 +384,18 @@ async function syncLeague(competition: CompetitionToSync): Promise<LeagueReport>
     return { ...report, status: "skipped", message: `Saison ${current.year} pas encore commencée.` };
   }
 
-  const fixtures = await fetchFixtures(competition.apiFootballLeagueId, current.year);
+  run.check();
+  let fixtures: ApiFixture[];
+  try {
+    fixtures = await fetchFixtures(competition.apiFootballLeagueId, current.year);
+  } catch (error) {
+    // Free plans only read past seasons: stop asking for a week.
+    if (/plan/i.test(String(error))) {
+      (progress.blockedUntil ??= {})[competition.apiFootballLeagueId] = new Date(Date.now() + 7 * DAY_MS).toISOString();
+      return { ...report, status: "skipped", message: "Saison en cours non incluse dans l'abonnement API-Football." };
+    }
+    throw error;
+  }
   if (fixtures.length === 0) return { ...report, status: "skipped", message: "Aucun match publié." };
 
   // A fixture belongs to the site season whose dates contain its kick-off.
@@ -316,170 +487,216 @@ async function syncLeague(competition: CompetitionToSync): Promise<LeagueReport>
   return report;
 }
 
-async function syncSquad(club: { id: string; nameFr: string; apiFootballTeamId: number }) {
+async function syncSquad(run: Run, club: { id: string; nameFr: string; apiFootballTeamId: number }) {
+  run.check();
   const squad = await fetchSquad(club.apiFootballTeamId);
-  const ownPlayers = await prisma.player.findMany({
-    where: { clubId: club.id, apiFootballPlayerId: null },
-    select: { id: true, name: true },
-  });
 
-  let created = 0;
+  const [known, ownPlayers] = await Promise.all([
+    prisma.player.findMany({
+      where: { apiFootballPlayerId: { in: squad.map((player) => player.id) } },
+      select: { id: true, apiFootballPlayerId: true, clubId: true, shirtNumber: true },
+    }),
+    prisma.player.findMany({
+      where: { clubId: club.id, apiFootballPlayerId: null },
+      select: { id: true, name: true },
+    }),
+  ]);
+  const knownById = new Map(known.map((player) => [player.apiFootballPlayerId!, player]));
+
   let updated = 0;
+  const fresh: typeof squad = [];
   for (const player of squad) {
-    const linked =
-      (await prisma.player.findUnique({ where: { apiFootballPlayerId: player.id } })) ??
-      bestMatch(player.name, ownPlayers, (own) => [own.name]);
-
+    const linked = knownById.get(player.id);
     if (linked) {
-      await prisma.player.update({
-        where: { id: linked.id },
-        data: { apiFootballPlayerId: player.id, clubId: club.id, shirtNumber: player.number ?? undefined },
-      });
-      const own = ownPlayers.findIndex((p) => p.id === linked.id);
-      if (own >= 0) ownPlayers.splice(own, 1);
-      updated += 1;
+      const number = player.number ?? linked.shirtNumber;
+      if (linked.clubId !== club.id || linked.shirtNumber !== number) {
+        await prisma.player.update({ where: { id: linked.id }, data: { clubId: club.id, shirtNumber: number } });
+        updated += 1;
+      }
       continue;
     }
 
-    const slug = await uniqueSlug(slugify(player.name), (candidate) =>
-      prisma.player.findUnique({ where: { slug: candidate }, select: { id: true } }),
-    );
-    await prisma.player.create({
-      data: {
-        slug,
-        name: player.name,
-        position: positionOf(player.position),
-        shirtNumber: player.number,
-        // API-Football's placeholder when it has no picture.
-        photoUrl: player.photo && !player.photo.endsWith("/0.png") ? player.photo : null,
-        clubId: club.id,
-        apiFootballPlayerId: player.id,
-      },
-    });
-    created += 1;
+    // A player already entered by hand for this club, e.g. "M. Doumbia" for "Mory Doumbia".
+    const own = bestMatch(player.name, ownPlayers, (p) => [p.name]);
+    if (own) {
+      await prisma.player.update({
+        where: { id: own.id },
+        data: { apiFootballPlayerId: player.id, shirtNumber: player.number ?? undefined },
+      });
+      ownPlayers.splice(ownPlayers.indexOf(own), 1);
+      updated += 1;
+      continue;
+    }
+    fresh.push(player);
   }
 
+  // Plain name slug when free, otherwise suffixed with the stable API id.
+  const bases = fresh.map((player) => slugify(player.name) || "joueur");
+  const taken = new Set(
+    (await prisma.player.findMany({ where: { slug: { in: bases } }, select: { slug: true } })).map((p) => p.slug),
+  );
+  const data = fresh.map((player, index) => {
+    const base = bases[index];
+    const slug = taken.has(base) ? `${base}-${player.id}` : base;
+    taken.add(slug);
+    return {
+      slug,
+      name: player.name,
+      position: positionOf(player.position),
+      shirtNumber: player.number,
+      // API-Football's placeholder when it has no picture.
+      photoUrl: player.photo && !player.photo.endsWith("/0.png") ? player.photo : null,
+      clubId: club.id,
+      apiFootballPlayerId: player.id,
+    };
+  });
+  if (data.length > 0) await prisma.player.createMany({ data, skipDuplicates: true });
+
   await prisma.club.update({ where: { id: club.id }, data: { squadSyncedAt: new Date() } });
-  return { created, updated };
+  return { created: data.length, updated };
 }
 
-/** Pulls fixtures, results and the stalest squads for every linked league, then stores the report. */
-export async function runApiFootballSync(): Promise<SyncReport> {
-  const report: SyncReport = { leagues: [], squads: [] };
+/** Squads of clubs playing this season not yet imported (or stale), oldest first. */
+function squadsToSync(take: number, countryId?: string) {
+  return prisma.club.findMany({
+    where: {
+      apiFootballTeamId: { not: null },
+      entries: { some: { season: { isCurrent: true }, ...(countryId ? { competition: { countryId } } : {}) } },
+      OR: [{ squadSyncedAt: null }, { squadSyncedAt: { lt: new Date(Date.now() - SQUAD_REFRESH_MS) } }],
+    },
+    select: { id: true, nameFr: true, apiFootballTeamId: true },
+    orderBy: { squadSyncedAt: { sort: "asc", nulls: "first" } },
+    take,
+  });
+}
 
+async function syncSquads(run: Run, clubs: Awaited<ReturnType<typeof squadsToSync>>) {
+  for (const club of clubs) {
+    try {
+      run.report.squads.push({
+        club: club.nameFr,
+        ...(await syncSquad(run, club as typeof club & { apiFootballTeamId: number })),
+      });
+    } catch (error) {
+      if (error instanceof QuotaExhaustedError || error instanceof OutOfTimeError) throw error;
+      run.report.squads.push({ club: club.nameFr, created: 0, updated: 0, error: String(error) });
+    }
+  }
+}
+
+async function syncLeagues(run: Run, progress: Progress, where: { countryId?: string } = {}) {
   const competitions = await prisma.competition.findMany({
-    where: { apiFootballLeagueId: { not: null } },
+    where: { apiFootballLeagueId: { not: null }, ...where },
     select: { id: true, nameFr: true, countryId: true, apiFootballLeagueId: true },
     orderBy: [{ tier: "asc" }, { nameFr: "asc" }],
   });
-
   for (const competition of competitions) {
+    if (run.leaguesDone.has(competition.id)) continue;
+    run.leaguesDone.add(competition.id);
     try {
-      report.leagues.push(await syncLeague(competition as CompetitionToSync));
+      run.report.leagues.push(await syncLeague(run, competition as CompetitionToSync, progress));
     } catch (error) {
-      report.leagues.push({ competition: competition.nameFr, status: "error", message: String(error) });
+      if (error instanceof QuotaExhaustedError || error instanceof OutOfTimeError) throw error;
+      run.report.leagues.push({ competition: competition.nameFr, status: "error", message: String(error) });
     }
   }
+}
 
-  const clubs = await prisma.club.findMany({
-    where: { apiFootballTeamId: { not: null } },
-    select: { id: true, nameFr: true, apiFootballTeamId: true },
-    orderBy: { squadSyncedAt: { sort: "asc", nulls: "first" } },
-    take: SQUADS_PER_RUN,
+/** Sets up one country: its leagues, its clubs, then its fixtures and squads. */
+async function setUpCountry(
+  run: Run,
+  progress: Progress,
+  country: { id: string; nameFr: string; nameEn: string },
+) {
+  const report: CountryReport = { country: country.nameFr };
+  const apiCountry = bestMatch(
+    country.nameEn === "Eswatini" ? "Swaziland" : country.nameEn,
+    progress.apiCountries ?? [],
+    (item) => [item.name],
+  );
+  if (!apiCountry) {
+    run.report.countries.push({ ...report, error: "Pays absent d'API-Football." });
+    (progress.leaguesCheckedAt ??= {})[country.id] = new Date().toISOString();
+    (progress.teamsCheckedAt ??= {})[country.id] = new Date().toISOString();
+    return;
+  }
+
+  try {
+    if (olderThan(progress.leaguesCheckedAt?.[country.id], LEAGUE_RECHECK_MS)) {
+      await discoverCountryLeagues(run, country.id, apiCountry.name, report);
+      (progress.leaguesCheckedAt ??= {})[country.id] = new Date().toISOString();
+    }
+    if (olderThan(progress.teamsCheckedAt?.[country.id], TEAM_RECHECK_MS)) {
+      await linkCountryTeams(run, country.id, apiCountry.name, report);
+      (progress.teamsCheckedAt ??= {})[country.id] = new Date().toISOString();
+    }
+  } finally {
+    if (Object.keys(report).length > 1) run.report.countries.push(report);
+  }
+
+  await syncLeagues(run, progress, { countryId: country.id });
+  await syncSquads(run, await squadsToSync(100, country.id));
+}
+
+async function runSteps(run: Run, progress: Progress) {
+  if (!progress.apiCountries || progress.apiCountries.length === 0) {
+    run.check();
+    progress.apiCountries = await fetchCountries();
+  }
+
+  // 1. Results of leagues already linked: the most visible data, cheapest to keep fresh.
+  await syncLeagues(run, progress);
+
+  // 2. Countries still to set up, the ones with the most clubs this season first.
+  const countries = await prisma.country.findMany({
+    where: { competitions: { some: { type: "LEAGUE", entries: { some: { season: { isCurrent: true } } } } } },
+    select: {
+      id: true,
+      nameFr: true,
+      nameEn: true,
+      competitions: { select: { _count: { select: { entries: { where: { season: { isCurrent: true } } } } } } },
+    },
   });
-  for (const club of clubs) {
-    try {
-      report.squads.push({ club: club.nameFr, ...(await syncSquad(club as typeof club & { apiFootballTeamId: number })) });
-    } catch (error) {
-      report.squads.push({ club: club.nameFr, created: 0, updated: 0, error: String(error) });
-    }
+  const size = (country: (typeof countries)[number]) =>
+    country.competitions.reduce((sum, competition) => sum + competition._count.entries, 0);
+  countries.sort((a, b) => size(b) - size(a));
+
+  for (const country of countries) {
+    const due =
+      olderThan(progress.leaguesCheckedAt?.[country.id], LEAGUE_RECHECK_MS) ||
+      olderThan(progress.teamsCheckedAt?.[country.id], TEAM_RECHECK_MS);
+    if (due) await setUpCountry(run, progress, country);
   }
 
+  // 3. Remaining squads: never imported first, then those older than a month.
+  await syncSquads(run, await squadsToSync(500));
+}
+
+/** Runs as much of the sync as the API quota and the time budget allow, then stores the report. */
+export async function runApiFootballSync(): Promise<SyncReport> {
+  const run = new Run();
+  const progress = await loadProgress();
+
+  try {
+    await runSteps(run, progress);
+  } catch (error) {
+    if (error instanceof QuotaExhaustedError) run.report.stopped = "quota";
+    else if (error instanceof OutOfTimeError) run.report.stopped = "time";
+    else throw error;
+  } finally {
+    await saveProgress(progress);
+  }
+
+  run.report.requestsRemaining = requestsRemainingToday();
+  run.report.squadsPending = await prisma.club.count({
+    where: { squadSyncedAt: null, entries: { some: { season: { isCurrent: true } } } },
+  });
+
+  const report = run.report as object;
   await prisma.apiFootballSync.upsert({
     where: { id: "main" },
     update: { ranAt: new Date(), report },
     create: { id: "main", ranAt: new Date(), report },
   });
-  return report;
-}
-
-export type DiscoveryResult = { competition: string; linkedTo?: string; candidates?: string[] };
-
-/**
- * Finds the API-Football league of every national championship not yet linked,
- * by matching names within the country (one request per country). Leagues with
- * no clear match are returned with the country's leagues, to be set by hand.
- */
-export async function discoverLeagues(): Promise<DiscoveryResult[]> {
-  const competitions = await prisma.competition.findMany({
-    where: {
-      apiFootballLeagueId: null,
-      type: "LEAGUE",
-      countryId: { not: null },
-      gender: "MALE",
-      ageCategory: "SENIOR",
-    },
-    include: { country: true },
-    orderBy: [{ tier: "asc" }],
-  });
-  const taken = new Set(
-    (await prisma.competition.findMany({ where: { apiFootballLeagueId: { not: null } } })).map(
-      (c) => c.apiFootballLeagueId,
-    ),
-  );
-
-  const byCountry = new Map<string, typeof competitions>();
-  for (const competition of competitions) {
-    const list = byCountry.get(competition.countryId!) ?? [];
-    list.push(competition);
-    byCountry.set(competition.countryId!, list);
-  }
-
-  const results: DiscoveryResult[] = [];
-  for (const list of byCountry.values()) {
-    const country = list[0].country!;
-    let leagues;
-    try {
-      // API-Football spells multi-word countries with hyphens: "Ivory-Coast".
-      leagues = await fetchCountryLeagues(country.nameEn.replace(/\s+/g, "-"));
-    } catch (error) {
-      for (const competition of list) results.push({ competition: competition.nameFr, candidates: [String(error)] });
-      continue;
-    }
-    const available = leagues.filter((league) => !taken.has(league.league.id));
-
-    for (const competition of list) {
-      const match = bestMatch(
-        competition.nameEn,
-        available,
-        (league) => [league.league.name],
-      ) ?? bestMatch(competition.nameFr, available, (league) => [league.league.name]);
-
-      if (!match) {
-        results.push({
-          competition: `${competition.nameFr} (${country.nameFr})`,
-          candidates: leagues.map((league) => `${league.league.name} — id ${league.league.id}`),
-        });
-        continue;
-      }
-
-      await prisma.competition.update({
-        where: { id: competition.id },
-        data: { apiFootballLeagueId: match.league.id },
-      });
-      taken.add(match.league.id);
-      available.splice(available.indexOf(match), 1);
-      results.push({
-        competition: `${competition.nameFr} (${country.nameFr})`,
-        linkedTo: `${match.league.name} — id ${match.league.id}`,
-      });
-    }
-  }
-
-  await prisma.apiFootballSync.upsert({
-    where: { id: "discovery" },
-    update: { ranAt: new Date(), report: results },
-    create: { id: "discovery", ranAt: new Date(), report: results },
-  });
-  return results;
+  return run.report;
 }

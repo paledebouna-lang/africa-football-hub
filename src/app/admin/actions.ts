@@ -9,7 +9,7 @@ import { youtubeVideoId } from "@/lib/youtube";
 import { isValidHeroVideo } from "@/lib/hero-video";
 import { refreshPlayerValuation } from "@/lib/refresh-valuation";
 import { fetchAndImportNews } from "@/lib/news-fetch";
-import { discoverLeagues, runApiFootballSync } from "@/lib/api-football-sync";
+import { runApiFootballSync } from "@/lib/api-football-sync";
 import { sendMail } from "@/lib/mailer";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -1317,16 +1317,8 @@ export async function syncFootballNow(): Promise<void> {
   await runApiFootballSync();
 
   revalidatePath("/admin/sync");
-  revalidatePublicSite();
-}
-
-export async function discoverLeaguesNow(): Promise<void> {
-  await requireAdmin();
-
-  await discoverLeagues();
-
-  revalidatePath("/admin/sync");
   revalidatePath("/admin/competitions");
+  revalidatePublicSite();
 }
 
 // ---------------------------------------------------------------- ads

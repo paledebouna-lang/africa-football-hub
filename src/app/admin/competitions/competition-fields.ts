@@ -84,7 +84,7 @@ export function competitionFields(
       name: "apiFootballLeagueId",
       label: "ID API-Football",
       defaultValue: defaults.apiFootballLeagueId ? String(defaults.apiFootballLeagueId) : "",
-      hint: "Active la mise à jour automatique du calendrier, des résultats et des effectifs. Laisse vide et utilise « Détecter les championnats » dans Administration > Synchronisation.",
+      hint: "Active la mise à jour automatique du calendrier, des résultats et des effectifs. Laisse vide : la synchronisation le détecte d'elle-même (Administration > Synchronisation).",
     },
     {
       kind: "image",
