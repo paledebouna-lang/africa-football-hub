@@ -69,6 +69,8 @@ type Progress = {
   /** countryId -> ISO date of the last league lookup / team lookup. */
   leaguesCheckedAt?: Record<string, string>;
   teamsCheckedAt?: Record<string, string>;
+  /** Clubs whose squad was entered by hand before their first sync: the API only links their players. */
+  handEnteredClubs?: string[];
   /** Linked leagues whose current season the API plan cannot read, until the date. */
   blockedUntil?: Record<number, string>;
 };
@@ -77,6 +79,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const LEAGUE_RECHECK_MS = 30 * DAY_MS;
 const TEAM_RECHECK_MS = 7 * DAY_MS;
 const SQUAD_REFRESH_MS = 30 * DAY_MS;
+/** Players entered by hand from which a club's squad counts as the official list. */
+const HAND_ENTERED_SQUAD = 11;
 /** Stay clear of the 300 s function limit, database writes included. */
 const RUN_BUDGET_MS = 250_000;
 
@@ -487,7 +491,11 @@ async function syncLeague(run: Run, competition: CompetitionToSync, progress: Pr
   return report;
 }
 
-async function syncSquad(run: Run, club: { id: string; nameFr: string; apiFootballTeamId: number }) {
+async function syncSquad(
+  run: Run,
+  progress: Progress,
+  club: { id: string; nameFr: string; apiFootballTeamId: number; squadSyncedAt: Date | null },
+) {
   run.check();
   const squad = await fetchSquad(club.apiFootballTeamId);
 
@@ -502,12 +510,20 @@ async function syncSquad(run: Run, club: { id: string; nameFr: string; apiFootba
     }),
   ]);
   const knownById = new Map(known.map((player) => [player.apiFootballPlayerId!, player]));
+  // A full squad entered by hand before the first sync (e.g. from the club's
+  // official list) is more current than the API's: the API then only links
+  // those players, it never adds any, moves any in, nor overwrites numbers.
+  if (!club.squadSyncedAt && ownPlayers.length >= HAND_ENTERED_SQUAD) {
+    (progress.handEnteredClubs ??= []).push(club.id);
+  }
+  const handEntered = progress.handEnteredClubs?.includes(club.id) ?? false;
 
   let updated = 0;
   const fresh: typeof squad = [];
   for (const player of squad) {
     const linked = knownById.get(player.id);
     if (linked) {
+      if (handEntered) continue;
       const number = player.number ?? linked.shirtNumber;
       if (linked.clubId !== club.id || linked.shirtNumber !== number) {
         await prisma.player.update({ where: { id: linked.id }, data: { clubId: club.id, shirtNumber: number } });
@@ -521,13 +537,16 @@ async function syncSquad(run: Run, club: { id: string; nameFr: string; apiFootba
     if (own) {
       await prisma.player.update({
         where: { id: own.id },
-        data: { apiFootballPlayerId: player.id, shirtNumber: player.number ?? undefined },
+        data: {
+          apiFootballPlayerId: player.id,
+          shirtNumber: handEntered ? undefined : (player.number ?? undefined),
+        },
       });
       ownPlayers.splice(ownPlayers.indexOf(own), 1);
       updated += 1;
       continue;
     }
-    fresh.push(player);
+    if (!handEntered) fresh.push(player);
   }
 
   // Plain name slug when free, otherwise suffixed with the stable API id.
@@ -564,18 +583,18 @@ function squadsToSync(take: number, countryId?: string) {
       entries: { some: { season: { isCurrent: true }, ...(countryId ? { competition: { countryId } } : {}) } },
       OR: [{ squadSyncedAt: null }, { squadSyncedAt: { lt: new Date(Date.now() - SQUAD_REFRESH_MS) } }],
     },
-    select: { id: true, nameFr: true, apiFootballTeamId: true },
+    select: { id: true, nameFr: true, apiFootballTeamId: true, squadSyncedAt: true },
     orderBy: { squadSyncedAt: { sort: "asc", nulls: "first" } },
     take,
   });
 }
 
-async function syncSquads(run: Run, clubs: Awaited<ReturnType<typeof squadsToSync>>) {
+async function syncSquads(run: Run, progress: Progress, clubs: Awaited<ReturnType<typeof squadsToSync>>) {
   for (const club of clubs) {
     try {
       run.report.squads.push({
         club: club.nameFr,
-        ...(await syncSquad(run, club as typeof club & { apiFootballTeamId: number })),
+        ...(await syncSquad(run, progress, club as typeof club & { apiFootballTeamId: number })),
       });
     } catch (error) {
       if (error instanceof QuotaExhaustedError || error instanceof OutOfTimeError) throw error;
@@ -635,7 +654,7 @@ async function setUpCountry(
   }
 
   await syncLeagues(run, progress, { countryId: country.id });
-  await syncSquads(run, await squadsToSync(100, country.id));
+  await syncSquads(run, progress, await squadsToSync(100, country.id));
 }
 
 async function runSteps(run: Run, progress: Progress) {
@@ -669,7 +688,7 @@ async function runSteps(run: Run, progress: Progress) {
   }
 
   // 3. Remaining squads: never imported first, then those older than a month.
-  await syncSquads(run, await squadsToSync(500));
+  await syncSquads(run, progress, await squadsToSync(500));
 }
 
 /** Runs as much of the sync as the API quota and the time budget allow, then stores the report. */
