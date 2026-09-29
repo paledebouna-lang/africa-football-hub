@@ -1,0 +1,189 @@
+{
+ "club": "FC San Pédro",
+ "photoFolder": "fc-san-pedro",
+ "source": "https://fcsanpedro.com/accueil/liste-joueurs.php?mark=Ligue-1 (export PDF fourni par l'administrateur)",
+ "players": [
+  {
+   "number": 12,
+   "name": "Koné Moussa",
+   "role": "Milieu défensif",
+   "position": "DM",
+   "heightCm": 175,
+   "dateOfBirth": "2005-01-01"
+  },
+  {
+   "number": 19,
+   "name": "Hamed Alpha",
+   "role": "Ailier",
+   "position": "RW",
+   "heightCm": 179,
+   "dateOfBirth": "2005-01-01"
+  },
+  {
+   "number": 24,
+   "name": "Koffi Jean Ariel",
+   "role": "Attaquant",
+   "position": "ST",
+   "heightCm": 180,
+   "dateOfBirth": "2004-11-06"
+  },
+  {
+   "number": 34,
+   "name": "Koné Inza",
+   "role": "Attaquant",
+   "position": "ST",
+   "heightCm": 182,
+   "dateOfBirth": "2005-12-30"
+  },
+  {
+   "number": 32,
+   "name": "Adjibi Mario",
+   "role": null,
+   "position": null,
+   "heightCm": 185,
+   "dateOfBirth": "2004-10-24"
+  },
+  {
+   "number": 29,
+   "name": "Fofana Bangaly",
+   "role": "Latéral droit",
+   "position": "RB",
+   "heightCm": 175,
+   "dateOfBirth": "2005-02-05"
+  },
+  {
+   "number": 3,
+   "name": "Bamba Goudousse",
+   "role": "Latéral droit",
+   "position": "RB",
+   "heightCm": 177,
+   "dateOfBirth": "2005-10-07"
+  },
+  {
+   "number": 4,
+   "name": "Touré Ibrahima",
+   "role": "Défenseur central",
+   "position": "CB",
+   "heightCm": 170,
+   "dateOfBirth": "2006-11-02"
+  },
+  {
+   "number": 21,
+   "name": "Komara Oumar Farouk",
+   "role": "Défenseur central",
+   "position": "CB"
+  },
+  {
+   "number": 19,
+   "name": "Koffi Yao Wilfried",
+   "role": "Milieu défensif",
+   "position": "DM",
+   "heightCm": 178,
+   "dateOfBirth": "2007-10-15"
+  },
+  {
+   "number": 9,
+   "name": "Kamagaté Dramane",
+   "role": "Attaquant",
+   "position": "ST",
+   "heightCm": 180,
+   "dateOfBirth": "2005-05-01"
+  },
+  {
+   "number": 36,
+   "name": "Yao Amara Romaric",
+   "role": "Milieu défensif",
+   "position": "DM",
+   "heightCm": 185,
+   "dateOfBirth": "2005-10-20"
+  },
+  {
+   "number": 17,
+   "name": "Wayou Constant",
+   "role": "Milieu offensif",
+   "position": "AM",
+   "heightCm": 182,
+   "dateOfBirth": "1996-12-20"
+  },
+  {
+   "number": 8,
+   "name": "Sidibe Alpha Stephane",
+   "role": "Milieu offensif",
+   "position": "AM",
+   "heightCm": 180,
+   "dateOfBirth": "2004-11-03"
+  },
+  {
+   "number": 3,
+   "name": "Yoan Franck Amos",
+   "role": "Latéral gauche",
+   "position": "LB",
+   "heightCm": 180,
+   "dateOfBirth": "2003-03-09"
+  },
+  {
+   "number": 5,
+   "name": "Mohammed Saaba Gariba",
+   "role": "Milieu défensif",
+   "position": "DM",
+   "heightCm": 180,
+   "dateOfBirth": "1990-10-12"
+  },
+  {
+   "number": 21,
+   "name": "Diarrassouba Hamed Tidiane",
+   "role": "Latéral gauche",
+   "position": "LB",
+   "heightCm": 170,
+   "dateOfBirth": "2005-11-05"
+  },
+  {
+   "number": 20,
+   "name": "Doumbia Alassane",
+   "role": "Ailier",
+   "position": "RW",
+   "heightCm": 170,
+   "dateOfBirth": "2004-10-06"
+  },
+  {
+   "number": 13,
+   "name": "Niambe Abi Kassi Theodor",
+   "role": "Milieu offensif",
+   "position": "AM",
+   "heightCm": 165,
+   "dateOfBirth": "2005-12-20"
+  },
+  {
+   "number": 26,
+   "name": "Karamoko Mouhamadou",
+   "role": "Défenseur central",
+   "position": "CB",
+   "heightCm": 184,
+   "dateOfBirth": "2005-08-27"
+  },
+  {
+   "number": 11,
+   "name": "Dosso Issouf",
+   "role": "Attaquant",
+   "position": "ST",
+   "heightCm": 183,
+   "dateOfBirth": "2003-12-16"
+  },
+  {
+   "number": 31,
+   "name": "Traore Mamadou",
+   "role": "Défenseur central",
+   "position": "CB",
+   "heightCm": 180,
+   "dateOfBirth": "2003-06-04"
+  },
+  {
+   "number": 1,
+   "name": "Ulrich Landry Kouassi",
+   "role": "Gardien de but",
+   "position": "GK",
+   "heightCm": 186,
+   "dateOfBirth": "2005-01-21"
+  }
+ ]
+}
