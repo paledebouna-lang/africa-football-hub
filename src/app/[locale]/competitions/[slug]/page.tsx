@@ -11,7 +11,7 @@ import { ProfileHeader, Badge } from "@/components/profile-header";
 import { DataTable, SectionTitle } from "@/components/data-table";
 import { Crest, Flag } from "@/components/ui/media";
 import { StandingsTable, type StandingsTableEntry } from "@/components/standings-table";
-import { FixturesList, type FixtureEntry } from "@/components/fixtures-list";
+import { MatchdayFixtures, type FixtureEntry } from "@/components/fixtures-list";
 import { TopScorersTable } from "@/components/top-scorers-table";
 
 export default async function CompetitionPage({
@@ -82,6 +82,7 @@ export default async function CompetitionPage({
         matchdayLabel: match.matchday
           ? t("match.matchdayShort", { matchday: match.matchday })
           : null,
+        matchday: match.matchday,
         homeSlug: match.homeCountry.slug,
         homeName: localizedName(match.homeCountry, locale),
         homeLogoUrl: match.homeCountry.flagUrl,
@@ -114,6 +115,7 @@ export default async function CompetitionPage({
         matchdayLabel: match.matchday
           ? t("match.matchdayShort", { matchday: match.matchday })
           : null,
+        matchday: match.matchday,
         homeSlug: match.homeClub.slug,
         homeName: localizedName(match.homeClub, locale),
         homeLogoUrl: match.homeClub.logoUrl,
@@ -195,10 +197,12 @@ export default async function CompetitionPage({
       {season && fixtures.length > 0 && (
         <section>
           <SectionTitle>{t("match.title")}</SectionTitle>
-          <FixturesList
+          <MatchdayFixtures
             fixtures={fixtures}
             hrefPrefix={isInternational ? "/national-teams" : "/clubs"}
             upcomingLabel={t("match.upcoming")}
+            matchdayTitle={(matchday) => t("match.matchdayTitle", { matchday })}
+            otherTitle={t("match.otherMatches")}
           />
         </section>
       )}
