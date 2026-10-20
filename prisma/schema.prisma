@@ -202,6 +202,9 @@ model Competition {
   /// League id on API-Football (api-sports.io). When set, fixtures, results and
   /// squads are pulled automatically by the daily sync (src/lib/api-football-sync.ts).
   apiFootballLeagueId Int? @unique
+  /// League id on TheSportsDB, the source of fixtures and results when the
+  /// API-Football plan does not cover the current season.
+  theSportsDbLeagueId Int? @unique
 
   country      Country?          @relation(fields: [countryId], references: [id], onDelete: SetNull)
   primaryClubs Club[]            @relation("ClubPrimaryCompetition")
@@ -243,6 +246,8 @@ model Club {
 
   /// Team id on API-Football, set by the sync when it recognises the club.
   apiFootballTeamId Int?    @unique
+  /// Team id on TheSportsDB, set by the sync when it recognises the club.
+  theSportsDbTeamId Int?    @unique
   /// Last time the squad was pulled from API-Football; the sync refreshes the
   /// stalest squads first so the daily request quota is shared fairly.
   squadSyncedAt     DateTime?
@@ -492,6 +497,8 @@ model Match {
 
   /// Fixture id on API-Football, set when the match is created or updated by the sync.
   apiFootballFixtureId Int? @unique
+  /// Event id on TheSportsDB, set when the match comes from that source.
+  theSportsDbEventId Int? @unique
 
   competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   season      Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)

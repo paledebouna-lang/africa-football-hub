@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { apiFootballConfigured } from "@/lib/api-football";
-import type { SyncReport } from "@/lib/api-football-sync";
+import type { SyncReport } from "@/lib/football-sync";
 import { AdminShell } from "@/components/admin-shell";
 import { syncFootballNow } from "../actions";
 
@@ -19,7 +19,7 @@ export default async function AdminSyncPage() {
 
   const [linked, engaged, clubsLinked, squadsDone, players, lastSync] = await Promise.all([
     prisma.competition.findMany({
-      where: { apiFootballLeagueId: { not: null } },
+      where: { OR: [{ apiFootballLeagueId: { not: null } }, { theSportsDbLeagueId: { not: null } }] },
       include: { country: true },
       orderBy: [{ tier: "asc" }, { nameFr: "asc" }],
     }),
@@ -52,11 +52,12 @@ export default async function AdminSyncPage() {
       }
     >
       <p className="mb-4 text-sm text-muted">
-        Deux fois par jour, la synchronisation relie les championnats et les clubs à
-        API-Football, puis met à jour le calendrier, les résultats (et donc les
-        classements) et les effectifs. Elle avance pays par pays, en commençant par
-        ceux qui comptent le plus de clubs, et s&apos;arrête quand le quota de requêtes
-        du jour est atteint : la passe suivante reprend là où elle s&apos;est arrêtée.
+        Deux fois par jour, la synchronisation met à jour le calendrier et les
+        résultats (donc les classements) depuis TheSportsDB, journée par journée,
+        et les effectifs depuis API-Football. Elle relie d&apos;abord les championnats
+        et les clubs de chaque source, pays par pays en commençant par ceux qui
+        comptent le plus de clubs, et s&apos;arrête quand son temps ou un quota de
+        requêtes est épuisé : la passe suivante reprend là où elle s&apos;est arrêtée.
         Un club déjà présent sur le site est reconnu par son nom ; pour un club non
         reconnu, renseigne son ID API-Football sur sa fiche.
       </p>
@@ -73,7 +74,10 @@ export default async function AdminSyncPage() {
 
       <section className="mb-6 grid gap-3 sm:grid-cols-4">
         {[
-          { label: "Championnats liés", value: linked.length },
+          {
+            label: "Championnats liés",
+            value: `${linked.filter((c) => c.theSportsDbLeagueId).length} résultats · ${linked.filter((c) => c.apiFootballLeagueId).length} effectifs`,
+          },
           { label: "Clubs reconnus", value: `${clubsLinked} / ${engaged}` },
           { label: "Effectifs importés", value: `${squadsDone} / ${engaged}` },
           { label: "Joueurs importés", value: players },
@@ -136,9 +140,14 @@ export default async function AdminSyncPage() {
                 {report.leagues.map((league, index) => (
                   <li key={index}>
                     <span className="font-medium">{league.competition}</span>{" "}
+                    {league.source && (
+                      <span className="rounded bg-brand/10 px-1.5 py-0.5 text-[11px] font-medium text-brand">
+                        {league.source}
+                      </span>
+                    )}{" "}
                     <span className="text-muted">
                       {league.status === "ok"
-                        ? `— ${league.played} matchs joués, ${league.created} créés, ${league.updated} mis à jour`
+                        ? `— ${league.played} matchs joués, ${league.created} créés, ${league.updated} mis à jour${league.message ? ` (${league.message})` : ""}`
                         : `— ${league.status === "error" ? "erreur : " : ""}${league.message}`}
                     </span>
                     {league.clubsCreated && (
@@ -147,7 +156,7 @@ export default async function AdminSyncPage() {
                     {league.unmatchedTeams && (
                       <p className="text-red-600">
                         Équipes non reconnues (leurs matchs sont ignorés) :{" "}
-                        {league.unmatchedTeams.map((team) => `${team.name} (id ${team.id})`).join(", ")}
+                        {league.unmatchedTeams.map((team) => `${team.name} (id ${league.source ?? "API-Football"} ${team.id})`).join(", ")}
                       </p>
                     )}
                   </li>
@@ -188,7 +197,10 @@ export default async function AdminSyncPage() {
                   {competition.nameFr}
                   {competition.country && ` (${competition.country.nameFr})`}
                 </Link>{" "}
-                <span className="text-muted">— id {competition.apiFootballLeagueId}</span>
+                <span className="text-muted">
+                  {competition.theSportsDbLeagueId && ` — TheSportsDB ${competition.theSportsDbLeagueId}`}
+                  {competition.apiFootballLeagueId && ` — API-Football ${competition.apiFootballLeagueId}`}
+                </span>
               </li>
             ))}
           </ul>
