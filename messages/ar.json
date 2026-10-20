@@ -225,6 +225,8 @@
     "opponentScore": "أهداف الخصم",
     "matchday": "الجولة",
     "matchdayShort": "ج{matchday}",
+    "matchdayTitle": "الجولة {matchday}",
+    "otherMatches": "مباريات أخرى",
     "upcoming": "لم تُلعب بعد",
     "save": "حفظ المباراة",
     "saveSheet": "حفظ الورقة",

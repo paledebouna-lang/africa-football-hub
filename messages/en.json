@@ -225,6 +225,8 @@
     "opponentScore": "Opponent's goals",
     "matchday": "Matchday",
     "matchdayShort": "MD{matchday}",
+    "matchdayTitle": "Matchday {matchday}",
+    "otherMatches": "Other matches",
     "upcoming": "Upcoming",
     "save": "Save match",
     "saveSheet": "Save team sheet",

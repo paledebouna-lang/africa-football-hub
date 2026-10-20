@@ -225,6 +225,8 @@
     "opponentScore": "Buts de l'adversaire",
     "matchday": "Journée",
     "matchdayShort": "J{matchday}",
+    "matchdayTitle": "Journée {matchday}",
+    "otherMatches": "Autres matchs",
     "upcoming": "À venir",
     "save": "Enregistrer le match",
     "saveSheet": "Enregistrer la feuille",

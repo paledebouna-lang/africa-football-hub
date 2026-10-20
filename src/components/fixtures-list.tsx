@@ -5,6 +5,8 @@ export type FixtureEntry = {
   id: string;
   dateLabel: string;
   matchdayLabel: string | null;
+  /** Round number, used to group a competition's matches by matchday. */
+  matchday?: number | null;
   homeSlug: string;
   homeName: string;
   homeLogoUrl: string | null;
@@ -58,6 +60,61 @@ export function FixturesList({
             <span className="truncate">{fixture.awayName}</span>
           </Link>
         </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * A competition's matches grouped by matchday ("Journée 1", "Journée 2"…), so
+ * a round rescheduled weeks later still sits with its own matchday. The last
+ * matchday with a result and the next one to play start open, the rest folded.
+ */
+export function MatchdayFixtures({
+  fixtures,
+  hrefPrefix,
+  upcomingLabel,
+  matchdayTitle,
+  otherTitle,
+}: {
+  fixtures: FixtureEntry[];
+  hrefPrefix: "/clubs" | "/national-teams";
+  upcomingLabel: string;
+  matchdayTitle: (matchday: number) => string;
+  otherTitle: string;
+}) {
+  const byMatchday = new Map<number | null, FixtureEntry[]>();
+  for (const fixture of fixtures) {
+    const key = fixture.matchday ?? null;
+    byMatchday.set(key, [...(byMatchday.get(key) ?? []), { ...fixture, matchdayLabel: null }]);
+  }
+  const groups = [...byMatchday.entries()].sort(([a], [b]) =>
+    a === null ? 1 : b === null ? -1 : a - b,
+  );
+
+  const played = (entries: FixtureEntry[]) =>
+    entries.some((f) => f.homeScore !== null && f.awayScore !== null);
+  const done = (entries: FixtureEntry[]) =>
+    entries.every((f) => f.homeScore !== null && f.awayScore !== null);
+  const lastPlayed = groups.findLast(([key, entries]) => key !== null && played(entries))?.[0];
+  const next = groups.find(([key, entries]) => key !== null && !done(entries))?.[0];
+
+  return (
+    <div className="space-y-3">
+      {groups.map(([key, entries]) => (
+        <details
+          key={key ?? "other"}
+          open={groups.length === 1 || key === lastPlayed || key === next}
+          className="group"
+        >
+          <summary className="mb-2 flex cursor-pointer list-none items-center justify-between rounded-md bg-brand/5 px-3 py-2 text-sm font-semibold">
+            <span>{key === null ? otherTitle : matchdayTitle(key)}</span>
+            <span className="text-xs font-normal text-muted">
+              {entries.length} <span className="inline-block transition-transform group-open:rotate-180">▾</span>
+            </span>
+          </summary>
+          <FixturesList fixtures={entries} hrefPrefix={hrefPrefix} upcomingLabel={upcomingLabel} />
+        </details>
       ))}
     </div>
   );
