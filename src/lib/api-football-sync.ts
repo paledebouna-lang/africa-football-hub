@@ -58,7 +58,9 @@ export type SyncReport = {
   countries: CountryReport[];
   squads: { club: string; created: number; updated: number; error?: string }[];
   /** Why the run ended before everything was up to date. */
-  stopped?: "quota" | "time";
+  stopped?: "quota" | "time" | "error";
+  /** Unexpected error that ended a step, shown in /admin/sync. */
+  errors?: string[];
   requestsRemaining?: number | null;
   /** Clubs taking part this season whose squad has never been imported. */
   squadsPending?: number;
@@ -92,8 +94,11 @@ const TEAM_RECHECK_MS = 7 * DAY_MS;
 const SQUAD_REFRESH_MS = 30 * DAY_MS;
 /** Players entered by hand from which a club's squad counts as the official list. */
 const HAND_ENTERED_SQUAD = 11;
-/** Stay clear of the 300 s function limit, database writes included. */
-const RUN_BUDGET_MS = 250_000;
+/**
+ * Stay clear of the 300 s function limit: a request may still wait a minute
+ * for a per-minute quota window, and the report must be written afterwards.
+ */
+const RUN_BUDGET_MS = 200_000;
 
 const STOPWORDS = new Set(["fc", "sc", "afc", "club", "football", "de", "d", "du", "des", "la", "le", "les", "l", "the"]);
 
@@ -671,6 +676,10 @@ async function setUpCountry(
       await linkCountryTeams(run, country.id, apiCountry.name, report);
       (progress.teamsCheckedAt ??= {})[country.id] = new Date().toISOString();
     }
+  } catch (error) {
+    if (error instanceof QuotaExhaustedError || error instanceof OutOfTimeError) throw error;
+    // One country's failure must not stop the others: note it and move on.
+    report.error = String(error);
   } finally {
     if (Object.keys(report).length > 1) run.report.countries.push(report);
   }
