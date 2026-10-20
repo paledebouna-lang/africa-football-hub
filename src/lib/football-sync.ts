@@ -24,23 +24,39 @@ export async function runFootballSync(): Promise<SyncReport> {
   const run = new Run();
   const progress = await loadProgress();
 
-  try {
-    await runTheSportsDbSteps(run, progress);
-    await runApiFootballSteps(run, progress);
-  } catch (error) {
-    if (error instanceof QuotaExhaustedError) run.report.stopped = "quota";
-    else if (error instanceof OutOfTimeError) run.report.stopped = "time";
-    else throw error;
-  } finally {
-    await saveProgress(progress);
+  // Each source runs on its own: a failure or a spent quota in one never keeps
+  // the other from running, and the report is written whatever happens.
+  for (const step of [runTheSportsDbSteps, runApiFootballSteps]) {
+    try {
+      await step(run, progress);
+    } catch (error) {
+      if (error instanceof OutOfTimeError) {
+        run.report.stopped = "time";
+        break;
+      }
+      if (error instanceof QuotaExhaustedError) {
+        run.report.stopped ??= "quota";
+        continue;
+      }
+      console.error("football sync step failed", error);
+      run.report.stopped ??= "error";
+      (run.report.errors ??= []).push(error instanceof Error ? (error.stack ?? error.message) : String(error));
+    }
   }
 
-  run.report.requestsRemaining = requestsRemainingToday();
-  run.report.squadsPending = await prisma.club.count({
-    where: { squadSyncedAt: null, entries: { some: { season: { isCurrent: true } } } },
-  });
+  try {
+    await saveProgress(progress);
+    run.report.requestsRemaining = requestsRemainingToday();
+    run.report.squadsPending = await prisma.club.count({
+      where: { squadSyncedAt: null, entries: { some: { season: { isCurrent: true } } } },
+    });
+  } catch (error) {
+    console.error("football sync bookkeeping failed", error);
+    (run.report.errors ??= []).push(String(error));
+  }
 
-  const report = run.report as object;
+  // Through JSON so no undefined or non-serialisable value can reject the write.
+  const report = JSON.parse(JSON.stringify(run.report)) as object;
   await prisma.apiFootballSync.upsert({
     where: { id: "main" },
     update: { ranAt: new Date(), report },

@@ -99,11 +99,18 @@ export default async function AdminSyncPage() {
               ? "Arrêtée : quota de requêtes du jour atteint, la suite à la prochaine passe."
               : report.stopped === "time"
                 ? "Arrêtée : durée maximale atteinte, la suite à la prochaine passe."
-                : "Terminée."}
+                : report.stopped === "error"
+                  ? "Terminée avec une erreur (détail ci-dessous) ; les autres étapes ont continué."
+                  : "Terminée."}
             {typeof report.requestsRemaining === "number" &&
               ` Requêtes restantes aujourd'hui : ${report.requestsRemaining}.`}
             {` ${squads.length} effectif(s) importé(s), ${playersAdded} joueur(s) ajouté(s).`}
           </p>
+          {report.errors && report.errors.length > 0 && (
+            <pre className="mb-4 max-h-48 overflow-auto whitespace-pre-wrap rounded bg-red-50 p-3 text-xs text-red-700">
+              {report.errors.join("\n\n")}
+            </pre>
+          )}
 
           {report.countries && report.countries.length > 0 && (
             <>
