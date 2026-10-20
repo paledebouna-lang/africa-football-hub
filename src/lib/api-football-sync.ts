@@ -15,10 +15,10 @@ import {
 } from "@/lib/api-football";
 
 /**
- * Keeps the site in step with API-Football: links each national championship
- * and each club to its API counterpart, then pulls fixtures, results (which
- * feed the standings) and squads. Runs twice a day from /api/cron/sync-football
- * and on demand from /admin/sync.
+ * The API-Football half of the football sync (see football-sync.ts): links each
+ * national championship and each club to its API counterpart, then pulls
+ * squads, and fixtures and results when the plan covers the current season
+ * (the free plan does not, so those come from TheSportsDB instead).
  *
  * The API quota is small (100 requests a day on the free plan), so a run works
  * until the quota or its time budget is spent and the next run picks up where
@@ -34,6 +34,7 @@ import {
 
 export type LeagueReport = {
   competition: string;
+  source?: "API-Football" | "TheSportsDB";
   status: "ok" | "skipped" | "error";
   message?: string;
   created?: number;
@@ -64,7 +65,7 @@ export type SyncReport = {
 };
 
 /** Where the setup of each country stands between runs. */
-type Progress = {
+export type Progress = {
   apiCountries?: ApiCountry[];
   /** countryId -> ISO date of the last league lookup / team lookup. */
   leaguesCheckedAt?: Record<string, string>;
@@ -73,9 +74,19 @@ type Progress = {
   handEnteredClubs?: string[];
   /** Linked leagues whose current season the API plan cannot read, until the date. */
   blockedUntil?: Record<number, string>;
+  /** countryId -> ISO date of the last TheSportsDB league lookup. */
+  tsdbCountryCheckedAt?: Record<string, string>;
+  /** TheSportsDB league id -> its current season label and when it was read. */
+  tsdbSeason?: Record<number, { label: string; checkedAt: string }>;
+  /** TheSportsDB league id -> last round whose matches are all settled. */
+  tsdbRound?: Record<number, number>;
+  /** TheSportsDB league id -> ISO date of the last sweep of every round. */
+  tsdbSweptAt?: Record<number, string>;
+  /** TheSportsDB team id -> its API-Football team id (0 when it has none), so a team is looked up once. */
+  tsdbTeamApi?: Record<number, number>;
 };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+export const DAY_MS = 24 * 60 * 60 * 1000;
 const LEAGUE_RECHECK_MS = 30 * DAY_MS;
 const TEAM_RECHECK_MS = 7 * DAY_MS;
 const SQUAD_REFRESH_MS = 30 * DAY_MS;
@@ -121,7 +132,12 @@ function similarity(a: string, b: string): number {
 }
 
 /** The single candidate that clearly matches `name`, or null when none or several do. */
-function bestMatch<T>(name: string, candidates: T[], namesOf: (candidate: T) => (string | null)[]): T | null {
+export function bestMatch<T>(
+  name: string,
+  candidates: T[],
+  namesOf: (candidate: T) => (string | null)[],
+  threshold = 0.6,
+): T | null {
   let best: T | null = null;
   let bestScore = 0;
   let tied = false;
@@ -135,10 +151,10 @@ function bestMatch<T>(name: string, candidates: T[], namesOf: (candidate: T) => 
       tied = true;
     }
   }
-  return bestScore >= 0.6 && !tied ? best : null;
+  return bestScore >= threshold && !tied ? best : null;
 }
 
-function statusOf(short: string): MatchStatus {
+export function statusOf(short: string): MatchStatus {
   if (["FT", "AET", "PEN", "AWD", "WO"].includes(short)) return "PLAYED";
   if (short === "PST") return "POSTPONED";
   if (["CANC", "ABD"].includes(short)) return "CANCELLED";
@@ -170,9 +186,9 @@ function positionOf(position: string | null): Position | null {
 /** Teams API-Football lists that are not a senior men's first team. */
 const NOT_FIRST_TEAM = /\b(w|u\d{2}|ii|b|reserves?|women|ladies|fem|feminin[ae]?|dames|youth|juniors?)\b/i;
 
-class OutOfTimeError extends Error {}
+export class OutOfTimeError extends Error {}
 
-class Run {
+export class Run {
   private readonly deadline = Date.now() + RUN_BUDGET_MS;
   readonly report: SyncReport = { leagues: [], countries: [], squads: [] };
   /** Competitions already synced during this run. */
@@ -191,12 +207,12 @@ type CompetitionToSync = {
   apiFootballLeagueId: number;
 };
 
-async function loadProgress(): Promise<Progress> {
+export async function loadProgress(): Promise<Progress> {
   const row = await prisma.apiFootballSync.findUnique({ where: { id: "progress" } });
   return (row?.report as Progress | undefined) ?? {};
 }
 
-async function saveProgress(progress: Progress) {
+export async function saveProgress(progress: Progress) {
   const report = progress as object;
   await prisma.apiFootballSync.upsert({
     where: { id: "progress" },
@@ -205,13 +221,14 @@ async function saveProgress(progress: Progress) {
   });
 }
 
-const olderThan = (iso: string | undefined, ms: number) => !iso || Date.now() - new Date(iso).getTime() > ms;
+export const olderThan = (iso: string | undefined, ms: number) =>
+  !iso || Date.now() - new Date(iso).getTime() > ms;
 
-/** Clubs of a country — through their main league or any entry — not yet tied to an API team. */
-function unlinkedClubsOf(countryId: string) {
+/** Clubs of a country — through their main league or any entry — not yet tied to a team of the source. */
+export function unlinkedClubsOf(countryId: string, source: "apiFootball" | "theSportsDb" = "apiFootball") {
   return prisma.club.findMany({
     where: {
-      apiFootballTeamId: null,
+      ...(source === "apiFootball" ? { apiFootballTeamId: null } : { theSportsDbTeamId: null }),
       type: "CLUB",
       OR: [
         { primaryCompetition: { countryId } },
@@ -374,7 +391,7 @@ async function resolveClubs(
 }
 
 async function syncLeague(run: Run, competition: CompetitionToSync, progress: Progress): Promise<LeagueReport> {
-  const report: LeagueReport = { competition: competition.nameFr, status: "ok" };
+  const report: LeagueReport = { competition: competition.nameFr, source: "API-Football", status: "ok" };
   const blocked = progress.blockedUntil?.[competition.apiFootballLeagueId];
   if (blocked && new Date(blocked) > new Date()) {
     return { ...report, status: "skipped", message: "Saison en cours non incluse dans l'abonnement API-Football." };
@@ -616,7 +633,12 @@ async function syncLeagues(run: Run, progress: Progress, where: { countryId?: st
       run.report.leagues.push(await syncLeague(run, competition as CompetitionToSync, progress));
     } catch (error) {
       if (error instanceof QuotaExhaustedError || error instanceof OutOfTimeError) throw error;
-      run.report.leagues.push({ competition: competition.nameFr, status: "error", message: String(error) });
+      run.report.leagues.push({
+        competition: competition.nameFr,
+        source: "API-Football",
+        status: "error",
+        message: String(error),
+      });
     }
   }
 }
@@ -657,7 +679,8 @@ async function setUpCountry(
   await syncSquads(run, progress, await squadsToSync(100, country.id));
 }
 
-async function runSteps(run: Run, progress: Progress) {
+/** The API-Football part of a sync: squads, plus fixtures when the plan covers the season. */
+export async function runApiFootballSteps(run: Run, progress: Progress) {
   if (!progress.apiCountries || progress.apiCountries.length === 0) {
     run.check();
     progress.apiCountries = await fetchCountries();
@@ -691,31 +714,4 @@ async function runSteps(run: Run, progress: Progress) {
   await syncSquads(run, progress, await squadsToSync(500));
 }
 
-/** Runs as much of the sync as the API quota and the time budget allow, then stores the report. */
-export async function runApiFootballSync(): Promise<SyncReport> {
-  const run = new Run();
-  const progress = await loadProgress();
-
-  try {
-    await runSteps(run, progress);
-  } catch (error) {
-    if (error instanceof QuotaExhaustedError) run.report.stopped = "quota";
-    else if (error instanceof OutOfTimeError) run.report.stopped = "time";
-    else throw error;
-  } finally {
-    await saveProgress(progress);
-  }
-
-  run.report.requestsRemaining = requestsRemainingToday();
-  run.report.squadsPending = await prisma.club.count({
-    where: { squadSyncedAt: null, entries: { some: { season: { isCurrent: true } } } },
-  });
-
-  const report = run.report as object;
-  await prisma.apiFootballSync.upsert({
-    where: { id: "main" },
-    update: { ranAt: new Date(), report },
-    create: { id: "main", ranAt: new Date(), report },
-  });
-  return run.report;
-}
+export { requestsRemainingToday, QuotaExhaustedError };

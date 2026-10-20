@@ -1,15 +1,16 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { apiFootballConfigured } from "@/lib/api-football";
-import { runApiFootballSync } from "@/lib/api-football-sync";
+import { runFootballSync } from "@/lib/football-sync";
 
 // A full sweep of every linked league and a batch of squads takes a while.
 export const maxDuration = 300;
 
 /**
- * Fixtures, results and squads sync from API-Football, twice a day. Vercel Cron hits
- * this on a schedule (see vercel.json); the "Synchroniser maintenant" button in
- * /admin/sync runs the same runApiFootballSync() directly.
+ * Fixtures and results (TheSportsDB) and squads (API-Football) sync, twice a
+ * day. Vercel Cron hits this on a schedule (see vercel.json); the
+ * "Synchroniser maintenant" button in /admin/sync runs the same
+ * runFootballSync() directly.
  */
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "API_FOOTBALL_KEY missing" }, { status: 503 });
   }
 
-  const report = await runApiFootballSync();
+  const report = await runFootballSync();
   // League pages are prerendered: purge them so the new scores show.
   revalidatePath("/", "layout");
   return NextResponse.json({ ok: true, report });

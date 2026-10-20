@@ -9,7 +9,7 @@ import { youtubeVideoId } from "@/lib/youtube";
 import { isValidHeroVideo } from "@/lib/hero-video";
 import { refreshPlayerValuation } from "@/lib/refresh-valuation";
 import { fetchAndImportNews } from "@/lib/news-fetch";
-import { runApiFootballSync } from "@/lib/api-football-sync";
+import { runFootballSync } from "@/lib/football-sync";
 import { sendMail } from "@/lib/mailer";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -1314,7 +1314,7 @@ export async function refreshNewsNow(): Promise<void> {
 export async function syncFootballNow(): Promise<void> {
   await requireAdmin();
 
-  await runApiFootballSync();
+  await runFootballSync();
 
   revalidatePath("/admin/sync");
   revalidatePath("/admin/competitions");
